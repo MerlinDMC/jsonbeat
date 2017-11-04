@@ -33,3 +33,4 @@ archive:
   files:
     - jsonbeat.yml
     - jsonbeat.reference.yml
+    - fields.yml

@@ -12,3 +12,5 @@ else
 fi
 
 chmod 0640 ${BEAT_NAME}.yml ${BEAT_NAME}.reference.yml
+
+cat vendor/github.com/elastic/beats/libbeat/_meta/fields.generated.yml _meta/fields.yml > fields.yml
