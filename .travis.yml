@@ -1,0 +1,13 @@
+language: go
+
+go:
+  - 1.9
+
+os:
+  - linux
+
+script:
+  - go test ./...
+
+after_success:
+  - test "$TRAVIS_OS_NAME" = "linux" -a -n "$TRAVIS_TAG" && curl -sL https://git.io/goreleaser | bash

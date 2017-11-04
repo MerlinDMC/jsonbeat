@@ -1,0 +1,6 @@
+.DS_Store
+/.idea
+/dist
+
+/jsonbeat.yml
+/jsonbeat.reference.yml
