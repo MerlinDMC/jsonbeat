@@ -6,6 +6,8 @@ go:
 os:
   - linux
 
+install: true
+
 script:
   - go test ./...
 
