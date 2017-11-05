@@ -14,6 +14,9 @@ builds:
     env:
       - BEAT_NAME=jsonbeat
       - BEAT_INDEX_PREFIX=jsonbeat
+      - CGO_ENABLED=0
+
+    ldflags: -extldflags="-static" -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
 
     hooks:
       post: ./scripts/update.sh
