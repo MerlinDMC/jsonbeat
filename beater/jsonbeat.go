@@ -145,7 +145,5 @@ func (bt *Jsonbeat) handleConnection(conn net.Conn) {
 		}
 
 		bt.client.Publish(event)
-
-		logp.Info("Event sent")
 	}
 }
