@@ -34,11 +34,16 @@ https://github.com/elastic/beats/compare/v6.0.0-rc2...master[Check the HEAD diff
 
 *Filebeat*
 
+- Fix machine learning jobs setup for dynamic modules. {pull}5509[5509]
+
 *Heartbeat*
 
 *Metricbeat*
 
 *Packetbeat*
+
+- Fix missing length check in the PostgreSQL module. {pull}5457[5457]
+- Fix panic in ACK handler if event is dropped on blocked queue {issue}5524[5524]
 
 *Winlogbeat*
 
@@ -50,9 +55,13 @@ https://github.com/elastic/beats/compare/v6.0.0-rc2...master[Check the HEAD diff
 
 *Filebeat*
 
+- Add Kubernetes manifests to deploy Filebeat. {pull}5349[5349]
+
 *Heartbeat*
 
 *Metricbeat*
+
+- Add Kubernetes manifests to deploy Metricbeat. {pull}5349[5349]
 
 *Packetbeat*
 

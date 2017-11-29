@@ -64,8 +64,8 @@
 [[projects]]
   name = "github.com/elastic/beats"
   packages = ["libbeat/api","libbeat/beat","libbeat/cfgfile","libbeat/cloudid","libbeat/cmd","libbeat/cmd/export","libbeat/cmd/instance","libbeat/cmd/test","libbeat/common","libbeat/common/atomic","libbeat/common/cfgwarn","libbeat/common/dtfmt","libbeat/common/file","libbeat/common/fmtstr","libbeat/common/jsontransform","libbeat/common/match","libbeat/common/schema","libbeat/common/schema/mapstriface","libbeat/common/streambuf","libbeat/dashboards","libbeat/logp","libbeat/monitoring","libbeat/monitoring/adapter","libbeat/monitoring/report","libbeat/monitoring/report/elasticsearch","libbeat/outputs","libbeat/outputs/codec","libbeat/outputs/codec/format","libbeat/outputs/codec/json","libbeat/outputs/console","libbeat/outputs/elasticsearch","libbeat/outputs/fileout","libbeat/outputs/kafka","libbeat/outputs/logstash","libbeat/outputs/outil","libbeat/outputs/redis","libbeat/outputs/transport","libbeat/paths","libbeat/plugin","libbeat/processors","libbeat/processors/actions","libbeat/processors/add_cloud_metadata","libbeat/processors/add_docker_metadata","libbeat/processors/add_kubernetes_metadata","libbeat/processors/add_locale","libbeat/publisher","libbeat/publisher/includes","libbeat/publisher/pipeline","libbeat/publisher/queue","libbeat/publisher/queue/memqueue","libbeat/service","libbeat/setup/kibana","libbeat/template","libbeat/testing","libbeat/version"]
-  revision = "61f38220247adc3cb742283c3711d350231124c8"
-  version = "v6.0.0-rc2"
+  revision = "91d6dbf42ab9edba6f93b16cfd178aafe1b52d1f"
+  version = "v6.0.0"
 
 [[projects]]
   name = "github.com/elastic/go-lumber"
@@ -238,6 +238,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8bdd04ce782c1910c07049a061f76a383c573d647660039156598f5ce5af101b"
+  inputs-digest = "1ffe7e090c0ebae985c24919c9e4a8eba64c20192236d90e553c2550cb2f343c"
   solver-name = "gps-cdcl"
   solver-version = 1
