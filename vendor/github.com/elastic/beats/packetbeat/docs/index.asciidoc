@@ -13,7 +13,7 @@ include::{asciidoc-dir}/../../shared/attributes.asciidoc[]
 :winlogbeat: http://www.elastic.co/guide/en/beats/winlogbeat/{doc-branch}
 :logstashdoc: https://www.elastic.co/guide/en/logstash/{doc-branch}
 :elasticsearch: https://www.elastic.co/guide/en/elasticsearch/reference/{doc-branch}
-:securitydoc: https://www.elastic.co/guide/en/x-pack/current
+:securitydoc: https://www.elastic.co/guide/en/x-pack/{doc-branch}
 :kibanadoc: https://www.elastic.co/guide/en/kibana/{doc-branch}
 :plugindoc: https://www.elastic.co/guide/en/elasticsearch/plugins/{doc-branch}
 :version: {stack-version}
@@ -22,6 +22,8 @@ include::{asciidoc-dir}/../../shared/attributes.asciidoc[]
 :beatname_pkg: {beatname_lc}
 :security: X-Pack Security
 :dockerimage: docker.elastic.co/beats/{beatname_lc}:{version}
+:dockergithub: https://github.com/elastic/beats-docker/tree/{doc-branch}
+
 
 include::./overview.asciidoc[]
 
@@ -40,6 +42,8 @@ include::./configuring-howto.asciidoc[]
 include::./fields.asciidoc[]
 
 include::./securing-packetbeat.asciidoc[]
+
+include::../../libbeat/docs/security/securing-beats.asciidoc[]
 
 include::./visualizing-data-packetbeat.asciidoc[]
 

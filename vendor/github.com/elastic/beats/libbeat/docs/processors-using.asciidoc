@@ -260,6 +260,7 @@ The following cloud providers are supported:
 - Google Compute Engine (GCE)
 - https://www.qcloud.com/?lang=en[Tencent Cloud] (QCloud)
 - Alibaba Cloud (ECS)
+- Azure Virtual Machine
 
 The simple configuration below enables the processor.
 
@@ -364,6 +365,24 @@ ECS instance.
   }
 }
 -------------------------------------------------------------------------------
+
+_Azure Virtual Machine_
+
+[source,json]
+-------------------------------------------------------------------------------
+{
+  "meta": {
+    "cloud": {
+      "provider": "az",
+      "instance_id": "04ab04c3-63de-4709-a9f9-9ab8c0411d5e",
+      "instance_name": "test-az-vm",
+      "machine_type": "Standard_D3_v2",
+      "region": "eastus2"
+    }
+  }
+}
+-------------------------------------------------------------------------------
+
 
 [[add-locale]]
 === Add the local time zone
@@ -496,6 +515,8 @@ the required fields, `@timestamp` and `type`, are exported.
 [[add-kubernetes-metadata]]
 === Add Kubernetes metadata
 
+beta[]
+
 The `add_kubernetes_metadata` processor annotates each event with relevant
 metadata based on which Kubernetes pod the event originated from. Each event is
 annotated with:
@@ -578,6 +599,8 @@ case you want to specify your own.
 
 [[add-docker-metadata]]
 === Add Docker metadata
+
+beta[]
 
 The `add_docker_metadata` processor annotates each event with relevant metadata
 from Docker containers:

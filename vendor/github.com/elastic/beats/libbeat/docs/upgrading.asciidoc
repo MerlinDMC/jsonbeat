@@ -7,6 +7,11 @@ This section gives general recommendations for upgrading the Beats:
 * <<upgrading-5-to-6>>
 * <<upgrade-mapping-template>>
 
+If you're upgrading other products in the stack, also read the
+{stack-ref}/index.html[Elastic Stack Installation and Upgrade Guide]. Want an
+upgrade list that's tailored to your stack? Try out our
+{upgrade_guide}[Interactive Upgrade Guide].
+
 [[upgrading-minor-versions]]
 === Upgrade between minor versions
 
@@ -149,3 +154,7 @@ template when you move to a new version.
 
 One exception is when upgrading from 5.x, in which case you should make sure to
 read the <<upgrading-to-5.6>> section.
+
+If downtime is not acceptable, another possible approach is to configure a
+different index pattern in the new Beat version, but this will likely require
+adjustments to your Kibana dashboards.
