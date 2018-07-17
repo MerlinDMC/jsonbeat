@@ -13,12 +13,12 @@ test: prepare-test
 	export GOPATH=${PWD}/build ; \
 	export PATH=${PATH}:${PWD}/build/bin; \
 	cd ${BEAT_PATH} ; \
-	make copy-vendor || exit 1  ; \
+	$(MAKE) copy-vendor || exit 1  ; \
 	${PREPARE_COMMAND} \
-	make check || exit 1 ; \
-	make update || exit 1 ; \
-	make || exit 1 ; \
-	make unit
+	$(MAKE) check || exit 1 ; \
+	$(MAKE) update || exit 1 ; \
+	$(MAKE) || exit 1 ; \
+	$(MAKE) unit
 
 prepare-test:: python-env
 	# Makes sure to use current version of beats for testing
@@ -36,14 +36,16 @@ test-build: test
 	cp -r ${PWD}/../../../dev-tools ${BEAT_PATH}/vendor/github.com/elastic/beats/
 
 	cd ${BEAT_PATH}/dev-tools/packer ; \
-	make deps ; \
-	make images
+	$(MAKE) deps ; \
+	$(MAKE) images
 
 # Sets up the virtual python environment
 .PHONY: python-env
 python-env:
 	@test -d ${PYTHON_ENV} || virtualenv ${PYTHON_ENV}
 	@${PYTHON_ENV}/bin/pip install --upgrade pip PyYAML
+	@# Work around pip bug. See: https://github.com/pypa/pip/issues/4464
+	@find $(PYTHON_ENV) -type d -name dist-packages -exec sh -c "echo dist-packages > {}.pth" ';'
 
 # Cleans up environment
 .PHONY: clean

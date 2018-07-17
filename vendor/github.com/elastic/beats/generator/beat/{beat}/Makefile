@@ -8,6 +8,7 @@ ES_BEATS?=./vendor/github.com/elastic/beats
 GOPACKAGES=$(shell govendor list -no-status +local)
 PREFIX?=.
 NOTICE_FILE=NOTICE
+GOBUILD_FLAGS=-i -ldflags "-X $(BEAT_PATH)/vendor/github.com/elastic/beats/libbeat/version.buildTime=$(NOW) -X $(BEAT_PATH)/vendor/github.com/elastic/beats/libbeat/version.commit=$(COMMIT_ID)"
 
 # Path to the libbeat Makefile
 -include $(ES_BEATS)/libbeat/scripts/Makefile
@@ -15,14 +16,14 @@ NOTICE_FILE=NOTICE
 # Initial beat setup
 .PHONY: setup
 setup: copy-vendor
-	make update
+	$(MAKE) update
 
 # Copy beats into vendor directory
 .PHONY: copy-vendor
 copy-vendor:
 	mkdir -p vendor/github.com/elastic/
 	cp -R ${BEAT_GOPATH}/src/github.com/elastic/beats vendor/github.com/elastic/
-	rm -rf vendor/github.com/elastic/beats/.git
+	rm -rf vendor/github.com/elastic/beats/.git vendor/github.com/elastic/beats/x-pack
 
 .PHONY: git-init
 git-init:
