@@ -8,7 +8,6 @@ import (
 
 // Name of this beat
 var Name = "jsonbeat"
-var version = ""
 
 // RootCmd to handle beats cli
-var RootCmd = cmd.GenRootCmd(Name, version, beater.New)
+var RootCmd = cmd.GenRootCmd(Name, "", beater.New)

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BEAT_NAME=${BEAT_NAME:-libbeat}
+BEAT_NAME=${BEAT_NAME:-jsonbeat}
 BEAT_INDEX_PREFIX=${BEAT_INDEX_PREFIX:-${BEAT_NAME}}
 
 
@@ -15,5 +15,4 @@ fi
 chmod 0640 ${BEAT_NAME}.yml ${BEAT_NAME}.reference.yml
 
 
-make -C vendor/github.com/elastic/beats/libbeat fields
-cat vendor/github.com/elastic/beats/libbeat/_meta/fields.generated.yml _meta/fields.yml > fields.yml
+go run vendor/github.com/elastic/beats/libbeat/scripts/cmd/global_fields/main.go -es_beats_path vendor/github.com/elastic/beats -out fields.yml

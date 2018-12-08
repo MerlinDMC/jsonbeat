@@ -32,31 +32,33 @@ import (
 )
 
 type ProcessFeatures struct {
-	ProcessInfo    bool
-	Environment    bool
-	FileDescriptor bool
-	CPUTimer       bool
-	Memory         bool
-	Seccomp        bool
-	Capabilities   bool
+	ProcessInfo          bool
+	Environment          bool
+	OpenHandleEnumerator bool
+	OpenHandleCounter    bool
+	Seccomp              bool
+	Capabilities         bool
 }
 
 var expectedProcessFeatures = map[string]*ProcessFeatures{
 	"darwin": &ProcessFeatures{
-		ProcessInfo:    true,
-		Environment:    true,
-		FileDescriptor: false,
-		CPUTimer:       true,
-		Memory:         true,
+		ProcessInfo:          true,
+		Environment:          true,
+		OpenHandleEnumerator: false,
+		OpenHandleCounter:    false,
 	},
 	"linux": &ProcessFeatures{
-		ProcessInfo:    true,
-		Environment:    true,
-		FileDescriptor: true,
-		CPUTimer:       true,
-		Memory:         true,
-		Seccomp:        true,
-		Capabilities:   true,
+		ProcessInfo:          true,
+		Environment:          true,
+		OpenHandleEnumerator: true,
+		OpenHandleCounter:    true,
+		Seccomp:              true,
+		Capabilities:         true,
+	},
+	"windows": &ProcessFeatures{
+		ProcessInfo:          true,
+		OpenHandleEnumerator: false,
+		OpenHandleCounter:    true,
 	},
 }
 
@@ -74,9 +76,8 @@ func TestProcessFeaturesMatrix(t *testing.T) {
 	features.ProcessInfo = true
 
 	_, features.Environment = process.(types.Environment)
-	_, features.FileDescriptor = process.(types.FileDescriptor)
-	_, features.CPUTimer = process.(types.CPUTimer)
-	_, features.Memory = process.(types.Memory)
+	_, features.OpenHandleEnumerator = process.(types.OpenHandleEnumerator)
+	_, features.OpenHandleCounter = process.(types.OpenHandleCounter)
 	_, features.Seccomp = process.(types.Seccomp)
 	_, features.Capabilities = process.(types.Capabilities)
 
@@ -146,29 +147,40 @@ func TestSelf(t *testing.T) {
 		output["process.env"] = actualEnv
 	}
 
-	if v, ok := process.(types.Memory); ok {
-		memInfo, err := v.Memory()
-		require.NoError(t, err)
+	memInfo, err := process.Memory()
+	require.NoError(t, err)
+	if runtime.GOOS != "windows" {
+		// Virtual memory may be reported as
+		// zero on some versions of Windows.
 		assert.NotZero(t, memInfo.Virtual)
-		assert.NotZero(t, memInfo.Resident)
-		output["process.mem"] = memInfo
 	}
+	assert.NotZero(t, memInfo.Resident)
+	output["process.mem"] = memInfo
 
-	if v, ok := process.(types.CPUTimer); ok {
-		cpuTimes, err := v.CPUTime()
+	for {
+		cpuTimes, err := process.CPUTime()
 		require.NoError(t, err)
-		assert.NotZero(t, cpuTimes)
-		output["process.cpu"] = cpuTimes
+		if cpuTimes.Total() != 0 {
+			output["process.cpu"] = cpuTimes
+			break
+		}
+		// Spin until CPU times are non-zero.
+		// Some operating systems have a very
+		// low resolution on process CPU
+		// measurement.
 	}
 
-	if v, ok := process.(types.FileDescriptor); ok {
-		count, err := v.FileDescriptorCount()
-		if assert.NoError(t, err) {
-			t.Log("file descriptor count:", count)
-		}
-		fds, err := v.FileDescriptors()
+	if v, ok := process.(types.OpenHandleEnumerator); ok {
+		fds, err := v.OpenHandles()
 		if assert.NoError(t, err) {
 			output["process.fd"] = fds
+		}
+	}
+
+	if v, ok := process.(types.OpenHandleCounter); ok {
+		count, err := v.OpenHandleCount()
+		if assert.NoError(t, err) {
+			t.Log("open handles count:", count)
 		}
 	}
 
@@ -226,4 +238,27 @@ func logAsJSON(t testing.TB, v interface{}) {
 	t.Helper()
 	j, _ := json.MarshalIndent(v, "", "  ")
 	t.Log(string(j))
+}
+
+func TestProcesses(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		// This test fails CI under Linux due to /proc/$pid permissions.
+		t.Skip("Run only under Windows")
+	}
+	start := time.Now()
+	procs, err := Processes()
+	took := time.Now().Sub(start)
+	t.Log("took", took)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("found", len(procs), "processes")
+	for _, proc := range procs {
+		info, err := proc.Info()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("pid=%v name='%s' exe='%s' args=%+v ppid=%d cwd='%s' start_time=%v", info.PID, info.Name, info.Exe, info.Args, info.PPID, info.CWD, info.StartTime)
+	}
+
 }

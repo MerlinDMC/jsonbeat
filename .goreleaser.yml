@@ -1,4 +1,7 @@
 ---
+release:
+  prerelease: auto
+
 builds:
   - main: main.go
     binary: jsonbeat
@@ -16,7 +19,7 @@ builds:
       - BEAT_INDEX_PREFIX=jsonbeat
       - CGO_ENABLED=0
 
-    ldflags: -extldflags="-static" -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    ldflags: -extldflags="-static" -s -w -X github.com/elastic/beats/libbeat/version.qualifier={{.Version}} -X github.com/elastic/beats/libbeat/version.commit={{.Commit}} -X github.com/elastic/beats/libbeat/version.buildTime={{.Date}}
 
     hooks:
       post: ./scripts/update.sh

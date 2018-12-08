@@ -139,6 +139,7 @@ the `set2` metricset will be fetched every 2 minutes:
 
 
 [float]
+[[module-config-options]]
 === Standard config options
 
 You can specify the following options for any Metricbeat module. Some modules
@@ -156,8 +157,7 @@ The name of the module to run. For documentation about each module, see the
 
 A list of metricsets to execute. Make sure that you only list metricsets that
 are available in the module. It is not possible to reference metricsets from
-other modules. For a list of available metricsets, see the documentation for the
-module.
+other modules. For a list of available metricsets, see <<metricbeat-modules>>.
 
 [float]
 ==== `enabled`
@@ -204,8 +204,8 @@ processors in your config.
 [[module-http-config-options]]
 === Standard HTTP config options
 
-The modules and metricsets for which the host is defined as a HTTP URL, also
-support the following options:
+The following options are available for modules and metricsets that define the
+host as an HTTP URL:
 
 [float]
 ==== `username`
@@ -216,3 +216,52 @@ The username to use for basic authentication.
 ==== `password`
 
 The password to use for basic authentication.
+
+[float]
+==== `ssl`
+
+Configuration options for SSL parameters like the certificate authority to use
+for HTTPS-based connections.
+
+See <<configuration-ssl>> for more information.
+
+[float]
+==== `headers`
+
+A list of headers to use with the HTTP request. For example:
+
+[source,yaml]
+----
+headers:
+  Cookie: abcdef=123456
+  My-Custom-Header: my-custom-value
+----
+
+[float]
+==== `bearer_token_file`
+
+If defined, Metricbeat will read the contents of the file once at initialization
+and then use the value in an HTTP Authorization header.
+
+[float]
+==== `basepath`
+
+An optional base path to be used in HTTP URIs. If defined, Metricbeat will insert this value
+as the first segment in the HTTP URI path.
+
+[float]
+==== `query`
+
+An optional value to pass common query params in YAML. Instead of setting the query params 
+within hosts values using the syntax `?key=value&key2&value2`, you can set it here like this:
+
+[source,yaml]
+----
+query:
+  key: value
+  key2: value2
+  list:
+  - 1.1
+  - 2.95
+  - -15
+----

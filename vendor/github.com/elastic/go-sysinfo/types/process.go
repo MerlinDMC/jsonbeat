@@ -20,7 +20,9 @@ package types
 import "time"
 
 type Process interface {
+	CPUTimer
 	Info() (ProcessInfo, error)
+	Memory() (MemoryInfo, error)
 }
 
 type ProcessInfo struct {
@@ -37,9 +39,14 @@ type Environment interface {
 	Environment() (map[string]string, error)
 }
 
-type FileDescriptor interface {
-	FileDescriptors() ([]string, error)
-	FileDescriptorCount() (int, error)
+// OpenHandleEnumerator lists the open file handles.
+type OpenHandleEnumerator interface {
+	OpenHandles() ([]string, error)
+}
+
+// OpenHandleCount returns the number the open file handles.
+type OpenHandleCounter interface {
+	OpenHandleCount() (int, error)
 }
 
 type CPUTimer interface {
@@ -50,10 +57,6 @@ type CPUTimer interface {
 	// to be populated for all platforms, and
 	// for both hosts and processes.
 	CPUTime() (CPUTimes, error)
-}
-
-type Memory interface {
-	Memory() (MemoryInfo, error)
 }
 
 type CPUTimes struct {
