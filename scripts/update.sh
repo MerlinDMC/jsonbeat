@@ -16,3 +16,4 @@ chmod 0640 ${BEAT_NAME}.yml ${BEAT_NAME}.reference.yml
 
 
 go run vendor/github.com/elastic/beats/libbeat/scripts/cmd/global_fields/main.go -es_beats_path vendor/github.com/elastic/beats -out fields.yml
+go run vendor/github.com/elastic/beats/dev-tools/cmd/asset/asset.go -pkg include -in fields.yml -out include/fields.go ${BEAT_NAME} fields.yml

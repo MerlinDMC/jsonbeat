@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/MerlinDMC/jsonbeat/cmd"
+	_ "github.com/MerlinDMC/jsonbeat/include"
 )
 
 func main() {

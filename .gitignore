@@ -1,6 +1,7 @@
 .DS_Store
 /.idea
 /dist
+/include/fields.go
 
 /jsonbeat.yml
 /jsonbeat.reference.yml

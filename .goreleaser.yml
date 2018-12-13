@@ -22,7 +22,7 @@ builds:
     ldflags: -extldflags="-static" -s -w -X github.com/elastic/beats/libbeat/version.qualifier={{.Version}} -X github.com/elastic/beats/libbeat/version.commit={{.Commit}} -X github.com/elastic/beats/libbeat/version.buildTime={{.Date}}
 
     hooks:
-      post: ./scripts/update.sh
+      pre: ./scripts/update.sh
 
 archive:
   replacements:
