@@ -142,7 +142,7 @@
   version = "v1.0.2"
 
 [[projects]]
-  digest = "1:864236d344b30d28a3bfcf5fc6fffdc87c0682549eb36f76cdb6432a404d3bca"
+  digest = "1:a8158ba9fe7916704ea3cab78e285439a5179949fcb40d2d05ee94285667025d"
   name = "github.com/elastic/beats"
   packages = [
     "libbeat/api",
@@ -236,8 +236,8 @@
     "libbeat/version",
   ]
   pruneopts = ""
-  revision = "b48d073b84e874a182c122d8ef2bad867f714a11"
-  version = "v6.5.2"
+  revision = "6da316ebb3ba6ed57725b7fd7c21e598522855bf"
+  version = "v6.5.3"
 
 [[projects]]
   digest = "1:1e740c464548791ea20635f2f02351a0319e3d9ac9dbde8505c8784e8904c812"
@@ -700,6 +700,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/elastic/beats/libbeat/asset",
     "github.com/elastic/beats/libbeat/beat",
     "github.com/elastic/beats/libbeat/cmd",
     "github.com/elastic/beats/libbeat/common",
