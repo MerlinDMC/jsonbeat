@@ -167,7 +167,9 @@ func (p *Processor) keyword(f *common.Field) common.MapStr {
 		fullName = f.Path + "." + f.Name
 	}
 
-	defaultFields = append(defaultFields, fullName)
+	if f.Index == nil || (f.Index != nil && *f.Index) {
+		defaultFields = append(defaultFields, fullName)
+	}
 
 	property["type"] = "keyword"
 
@@ -201,7 +203,9 @@ func (p *Processor) text(f *common.Field) common.MapStr {
 		fullName = f.Path + "." + f.Name
 	}
 
-	defaultFields = append(defaultFields, fullName)
+	if f.Index == nil || (f.Index != nil && *f.Index) {
+		defaultFields = append(defaultFields, fullName)
+	}
 
 	properties["type"] = "text"
 
@@ -245,6 +249,11 @@ func (p *Processor) array(f *common.Field) common.MapStr {
 }
 
 func (p *Processor) alias(f *common.Field) common.MapStr {
+	// Aliases were introduced in Elasticsearch 6.4, ignore if unsupported
+	if p.EsVersion.LessThan(common.MustNewVersion("6.4.0")) {
+		return nil
+	}
+
 	properties := getDefaultProperties(f)
 	properties["type"] = "alias"
 	properties["path"] = f.AliasPath

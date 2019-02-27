@@ -1,6 +1,6 @@
 [
     {
-        "@timestamp": "2018-12-13T11:35:28.000Z", 
+        "event.dataset": "system.syslog", 
         "fileset.module": "system", 
         "fileset.name": "syslog", 
         "input.type": "log", 
@@ -16,7 +16,7 @@
         "system.syslog.timestamp": "Dec 13 11:35:28"
     }, 
     {
-        "@timestamp": "2018-12-13T11:35:28.000Z", 
+        "event.dataset": "system.syslog", 
         "fileset.module": "system", 
         "fileset.name": "syslog", 
         "input.type": "log", 
@@ -29,7 +29,7 @@
         "system.syslog.timestamp": "Dec 13 11:35:28"
     }, 
     {
-        "@timestamp": "2018-04-04T03:39:57.000Z", 
+        "event.dataset": "system.syslog", 
         "fileset.module": "system", 
         "fileset.name": "syslog", 
         "input.type": "log", 

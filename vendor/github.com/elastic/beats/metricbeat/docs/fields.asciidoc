@@ -13,6 +13,7 @@ This document describes the fields that are exported by Metricbeat. They are
 grouped in the following categories:
 
 * <<exported-fields-aerospike>>
+* <<exported-fields-alias>>
 * <<exported-fields-apache>>
 * <<exported-fields-beat>>
 * <<exported-fields-ceph>>
@@ -409,6 +410,121 @@ type: boolean
 
 If true this namespace is currently not allowing writes.
 
+
+--
+
+[[exported-fields-alias]]
+== Alias fields
+
+Alias fields for compatibility with 7.x.
+
+
+
+*`host.hostname`*::
++
+--
+type: alias
+
+alias to: beat.hostname
+
+--
+
+*`event.timezone`*::
++
+--
+type: alias
+
+alias to: beat.timezone
+
+--
+
+*`cloud.provider`*::
++
+--
+type: alias
+
+alias to: meta.cloud.provider
+
+--
+
+*`cloud.instance.id`*::
++
+--
+type: alias
+
+alias to: meta.cloud.instance_id
+
+--
+
+*`cloud.instance.name`*::
++
+--
+type: alias
+
+alias to: meta.cloud.instance_name
+
+--
+
+*`cloud.machine.type`*::
++
+--
+type: alias
+
+alias to: meta.cloud.machine_type
+
+--
+
+*`cloud.availability_zone`*::
++
+--
+type: alias
+
+alias to: meta.cloud.availability_zone
+
+--
+
+*`cloud.project.id`*::
++
+--
+type: alias
+
+alias to: meta.cloud.project_id
+
+--
+
+*`cloud.region`*::
++
+--
+type: alias
+
+alias to: meta.cloud.region
+
+--
+
+*`container.id`*::
++
+--
+type: alias
+
+alias to: docker.container.id
+
+--
+
+*`container.name`*::
++
+--
+type: alias
+
+alias to: docker.container.name
+
+--
+
+*`container.image.name`*::
++
+--
+type: alias
+
+alias to: docker.container.image
 
 --
 
@@ -1838,6 +1954,9 @@ Hostname of the machine from which the metricset was collected. This field may n
 *`metricset.rtt`*::
 +
 --
+
+deprecated[True]
+
 type: long
 
 required: True
@@ -1876,6 +1995,35 @@ example: elasticsearch
 
 Name of the service metricbeat fetches the data from.
 
+
+--
+
+*`event.duration`*::
++
+--
+type: long
+
+Duration of the event in nano seconds.
+
+
+--
+
+*`event.dataset`*::
++
+--
+type: keyword
+
+Event dataset name.
+
+
+--
+
+*`event.module`*::
++
+--
+type: alias
+
+alias to: metricset.module
 
 --
 
@@ -3461,6 +3609,26 @@ Elasticsearch state id.
 
 --
 
+*`elasticsearch.node.id`*::
++
+--
+type: keyword
+
+Node ID
+
+
+--
+
+*`elasticsearch.node.name`*::
++
+--
+type: keyword
+
+Node name.
+
+
+--
+
 [float]
 == ccr fields
 
@@ -3510,7 +3678,7 @@ Number of the shard within the index
 
 --
 
-*`elasticsearch.ccr.follower.operations_indexed`*::
+*`elasticsearch.ccr.follower.operations_written`*::
 +
 --
 type: long
@@ -3520,7 +3688,7 @@ Number of operations indexed (replicated) into the follower shard from the leade
 
 --
 
-*`elasticsearch.ccr.follower.time_since_last_fetch.ms`*::
+*`elasticsearch.ccr.follower.time_since_last_read.ms`*::
 +
 --
 type: long
@@ -3997,16 +4165,6 @@ The number of records with either a missing date field or a date that could not 
 node
 
 
-
-*`elasticsearch.node.name`*::
-+
---
-type: keyword
-
-Node name.
-
-
---
 
 *`elasticsearch.node.version`*::
 +

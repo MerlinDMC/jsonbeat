@@ -23,7 +23,7 @@
 
 [[constraint]]
   name = "github.com/elastic/beats"
-  version = "=v6.5.3"
+  version = "=v6.6.1"
 
 [[override]]
   name = "github.com/Shopify/sarama"

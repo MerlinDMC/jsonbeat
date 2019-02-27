@@ -142,12 +142,14 @@
   version = "v1.0.2"
 
 [[projects]]
-  digest = "1:a8158ba9fe7916704ea3cab78e285439a5179949fcb40d2d05ee94285667025d"
+  digest = "1:3fc91417585bd86efcf29879ba98e2a308d173a897742065c619f37abf4997eb"
   name = "github.com/elastic/beats"
   packages = [
+    "filebeat/scripts/generator",
     "libbeat/api",
     "libbeat/asset",
     "libbeat/autodiscover",
+    "libbeat/autodiscover/appenders/config",
     "libbeat/autodiscover/builder",
     "libbeat/autodiscover/meta",
     "libbeat/autodiscover/providers/docker",
@@ -163,6 +165,7 @@
     "libbeat/cmd/test",
     "libbeat/common",
     "libbeat/common/atomic",
+    "libbeat/common/backoff",
     "libbeat/common/bus",
     "libbeat/common/cfgtype",
     "libbeat/common/cfgwarn",
@@ -236,8 +239,8 @@
     "libbeat/version",
   ]
   pruneopts = ""
-  revision = "6da316ebb3ba6ed57725b7fd7c21e598522855bf"
-  version = "v6.5.3"
+  revision = "928f5e3f35fe28c1bd73513ff1cc89406eb212a6"
+  version = "v6.6.1"
 
 [[projects]]
   digest = "1:1e740c464548791ea20635f2f02351a0319e3d9ac9dbde8505c8784e8904c812"
