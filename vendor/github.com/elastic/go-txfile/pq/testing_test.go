@@ -19,6 +19,7 @@ package pq
 
 import (
 	"math/rand"
+	"testing"
 
 	"github.com/elastic/go-txfile"
 	"github.com/elastic/go-txfile/internal/cleanup"
@@ -46,6 +47,10 @@ func exactly(n int) testRange        { return testRange{n, n} }
 func between(min, max int) testRange { return testRange{min, max} }
 
 func setupQueue(t *mint.T, cfg config) (*testQueue, func()) {
+	if testing.Short() {
+		cfg.File.Sync = txfile.SyncNone
+	}
+
 	tf, teardown := txfiletest.SetupTestFile(t.T, cfg.File)
 
 	ok := false
@@ -102,6 +107,10 @@ func (q *testQueue) Close() {
 }
 
 func (q *testQueue) len() int {
+	reader := q.Reader()
+	q.t.FatalOnError(reader.Begin())
+	defer reader.Done()
+
 	i, err := q.Reader().Available()
 	q.t.NoError(err)
 	return int(i)
@@ -118,6 +127,14 @@ func (q *testQueue) append(events ...string) {
 	}
 }
 
+func (q *testQueue) readWith(fn func(*Reader)) {
+	r := q.Reader()
+	q.t.FatalOnError(r.Begin())
+	defer r.Done()
+
+	fn(r)
+}
+
 // read reads up to n events from the queue.
 func (q *testQueue) read(n int) []string {
 	var out []string
@@ -126,7 +143,7 @@ func (q *testQueue) read(n int) []string {
 	}
 
 	reader := q.Reader()
-	reader.Begin()
+	q.t.FatalOnError(reader.Begin())
 	defer reader.Done()
 
 	for n < 0 || len(out) < n {

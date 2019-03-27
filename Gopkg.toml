@@ -23,7 +23,7 @@
 
 [[constraint]]
   name = "github.com/elastic/beats"
-  version = "=v6.6.1"
+  version = "=v6.7.0"
 
 [[override]]
   name = "github.com/Shopify/sarama"
@@ -31,4 +31,4 @@
 
 [[override]]
   name = "github.com/elastic/go-txfile"
-  version = "=0.0.3"
+  version = "=0.0.6"

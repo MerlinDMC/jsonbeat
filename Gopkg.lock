@@ -142,7 +142,7 @@
   version = "v1.0.2"
 
 [[projects]]
-  digest = "1:3fc91417585bd86efcf29879ba98e2a308d173a897742065c619f37abf4997eb"
+  digest = "1:dcb5a9db2c2bab8c9e663be848541ed275fa6035847dc6d8266a95f1b5f3e509"
   name = "github.com/elastic/beats"
   packages = [
     "filebeat/scripts/generator",
@@ -239,8 +239,8 @@
     "libbeat/version",
   ]
   pruneopts = ""
-  revision = "928f5e3f35fe28c1bd73513ff1cc89406eb212a6"
-  version = "v6.6.1"
+  revision = "14ca49c28a6e10b84b4ea8cdebdc46bd2eab3130"
+  version = "v6.7.0"
 
 [[projects]]
   digest = "1:1e740c464548791ea20635f2f02351a0319e3d9ac9dbde8505c8784e8904c812"
@@ -297,10 +297,13 @@
   revision = "7b021494a9562d0c3f0422d49b9980709c5650e9"
 
 [[projects]]
-  digest = "1:1861e42738b3fcc9a154477c1c1be2207e7a30eee431bbe082bcab5c6a76cc45"
+  digest = "1:c38b6189275bdcc5cf5064e11d8b71c2f931dc961473a3b41fcd85f5512e8caf"
   name = "github.com/elastic/go-txfile"
   packages = [
     ".",
+    "dev-tools/lib/mage/gotool",
+    "dev-tools/lib/mage/mgenv",
+    "dev-tools/lib/mage/xbuild",
     "internal/cleanup",
     "internal/invariant",
     "internal/iter",
@@ -312,8 +315,8 @@
     "txerr",
   ]
   pruneopts = ""
-  revision = "389b527ad365f6fc6cf5fa7e0ba5a2294ad2f3ed"
-  version = "v0.0.3"
+  revision = "fa3d87c14381c01aaa1c7901877fb5e483294964"
+  version = "v0.0.6"
 
 [[projects]]
   digest = "1:97a434d511a59125772ad029efd1d54e9b02db827bec55f7d6c63d42e3c7a1a0"
@@ -469,6 +472,17 @@
   pruneopts = ""
   revision = "ae7887de9fa5d2db4eaa8174a7eff2c1ac00f2da"
   version = "v1.1"
+
+[[projects]]
+  digest = "1:dc3c508a9fa85ca3e0b66d02aa0a934c75c00d8815e95793dc217f54629c8c5c"
+  name = "github.com/magefile/mage"
+  packages = [
+    "mg",
+    "sh",
+  ]
+  pruneopts = ""
+  revision = "aedfce64c122eef47009b7f80c9771044753215d"
+  version = "v1.8.0"
 
 [[projects]]
   digest = "1:9ea83adf8e96d6304f394d40436f2eb44c1dc3250d223b74088cc253a6cd0a1c"
