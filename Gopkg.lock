@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:31631e8c076fdda45675347ac76f4e3466b65648064704f38c6e73b5d0f91c39"
+  name = "github.com/DataDog/zstd"
+  packages = ["."]
+  pruneopts = ""
+  revision = "69c5189b6513b1503c9c5332fb2e96362e51d547"
+  version = "v1.3.8"
+
+[[projects]]
   digest = "1:c9c336ca4936411a991d81f976dac8abf277ac7fd9d1c8ef706e94fc7948a0f7"
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
@@ -10,12 +18,12 @@
   version = "v0.4.5"
 
 [[projects]]
-  digest = "1:213b41361ad1cb4768add9d26c2e27794c65264eefdb24ed6ea34cdfeeff3f3c"
+  digest = "1:072c4df72b72758253d774fe5602c1a9ab86056e55ec806def5aa139e5ac7a4d"
   name = "github.com/Shopify/sarama"
   packages = ["."]
   pruneopts = ""
-  revision = "a6144ae922fd99dd0ea5046c8137acfb7fab0914"
-  version = "v1.18.0"
+  revision = "03a43f93cd29dc549e6d9b11892795c206f9c38c"
+  version = "v1.20.1"
 
 [[projects]]
   digest = "1:8cf46b6c18a91068d446e26b67512cf16f1540b45d90b28b9533706a127f0ca6"
@@ -142,10 +150,10 @@
   version = "v1.0.2"
 
 [[projects]]
-  digest = "1:dcb5a9db2c2bab8c9e663be848541ed275fa6035847dc6d8266a95f1b5f3e509"
+  digest = "1:40ee799f738f2d8f15af253a864e7e5bb74b6813e502509f09dbcac9258caf2d"
   name = "github.com/elastic/beats"
   packages = [
-    "filebeat/scripts/generator",
+    "filebeat/generator",
     "libbeat/api",
     "libbeat/asset",
     "libbeat/autodiscover",
@@ -189,6 +197,8 @@
     "libbeat/conditions",
     "libbeat/dashboards",
     "libbeat/feature",
+    "libbeat/idxmgmt",
+    "libbeat/idxmgmt/ilm",
     "libbeat/keystore",
     "libbeat/kibana",
     "libbeat/logp",
@@ -230,6 +240,7 @@
     "libbeat/publisher",
     "libbeat/publisher/includes",
     "libbeat/publisher/pipeline",
+    "libbeat/publisher/processing",
     "libbeat/publisher/queue",
     "libbeat/publisher/queue/memqueue",
     "libbeat/publisher/queue/spool",
@@ -239,8 +250,16 @@
     "libbeat/version",
   ]
   pruneopts = ""
-  revision = "14ca49c28a6e10b84b4ea8cdebdc46bd2eab3130"
-  version = "v6.7.0"
+  revision = "da192b7d09af1d735cef19ea7816b8b8a5d4a323"
+  version = "v7.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:bb95d4c522adecb29cf3c967ec3ef702a9f527560cce43427957e8764549ddd9"
+  name = "github.com/elastic/ecs"
+  packages = ["code/go/ecs"]
+  pruneopts = ""
+  revision = "6f0c5c54ea9fd692d87eda3a3950afdc9c6a1683"
 
 [[projects]]
   digest = "1:1e740c464548791ea20635f2f02351a0319e3d9ac9dbde8505c8784e8904c812"
@@ -319,7 +338,7 @@
   version = "v0.0.6"
 
 [[projects]]
-  digest = "1:97a434d511a59125772ad029efd1d54e9b02db827bec55f7d6c63d42e3c7a1a0"
+  digest = "1:512921680ad154ecf00f2b560a9077e232a4390e44308e1467380906901b2325"
   name = "github.com/elastic/go-ucfg"
   packages = [
     ".",
@@ -330,8 +349,8 @@
     "yaml",
   ]
   pruneopts = ""
-  revision = "92d43887f91851c9936621665af7f796f4d03412"
-  version = "v0.6.5"
+  revision = "0539807037ce820e147797f051ff32b05f4f9288"
+  version = "v0.7.0"
 
 [[projects]]
   branch = "master"
@@ -555,11 +574,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5e3f4c2357e1e95ede9f36dc027b4b5a2cca463c8899344c22ebeb7c0abab8d5"
+  digest = "1:bc5884d890d71ae56382665a93d792af3602dae40fa98778170e4795598a7264"
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
   pruneopts = ""
-  revision = "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
+  revision = "3113b8401b8a98917cde58f8bbd42a1b1c03b1fd"
 
 [[projects]]
   digest = "1:2208a80fc3259291e43b30f42f844d18f4218036dff510f42c653ec9890d460a"
