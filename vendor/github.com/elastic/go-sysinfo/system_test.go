@@ -20,11 +20,15 @@ package sysinfo
 import (
 	"encoding/json"
 	"os"
+	osUser "os/user"
 	"runtime"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -94,6 +98,7 @@ func TestSelf(t *testing.T) {
 	} else if err != nil {
 		t.Fatal(err)
 	}
+	assert.EqualValues(t, os.Getpid(), process.PID())
 
 	if runtime.GOOS == "linux" {
 		// Do some dummy work to spend user CPU time.
@@ -112,6 +117,7 @@ func TestSelf(t *testing.T) {
 	assert.EqualValues(t, os.Getpid(), info.PID)
 	assert.EqualValues(t, os.Getppid(), info.PPID)
 	assert.Equal(t, os.Args, info.Args)
+	assert.WithinDuration(t, info.StartTime, time.Now(), 10*time.Second)
 
 	wd, err := os.Getwd()
 	if err != nil {
@@ -125,10 +131,29 @@ func TestSelf(t *testing.T) {
 	}
 	assert.Equal(t, exe, info.Exe)
 
+	parent, err := process.Parent()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.WithinDuration(t, info.StartTime, time.Now(), 10*time.Second)
+	assert.EqualValues(t, os.Getppid(), parent.PID())
+
+	user, err := process.User()
+	if err != nil {
+		t.Fatal(err)
+	}
+	output["process.user"] = user
+
+	currentUser, err := osUser.Current()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.EqualValues(t, currentUser.Uid, user.UID)
+	assert.EqualValues(t, currentUser.Gid, user.GID)
+
+	if runtime.GOOS != "windows" {
+		assert.EqualValues(t, strconv.Itoa(os.Geteuid()), user.EUID)
+		assert.EqualValues(t, strconv.Itoa(os.Getegid()), user.EGID)
+	}
 
 	if v, ok := process.(types.Environment); ok {
 		expectedEnv := map[string]string{}
@@ -213,6 +238,7 @@ func TestHost(t *testing.T) {
 
 	info := host.Info()
 	assert.NotZero(t, info)
+	assert.NotZero(t, info.UniqueID)
 
 	memory, err := host.Memory()
 	if err != nil {
@@ -241,24 +267,28 @@ func logAsJSON(t testing.TB, v interface{}) {
 }
 
 func TestProcesses(t *testing.T) {
-	if runtime.GOOS != "windows" {
-		// This test fails CI under Linux due to /proc/$pid permissions.
-		t.Skip("Run only under Windows")
-	}
 	start := time.Now()
 	procs, err := Processes()
-	took := time.Now().Sub(start)
-	t.Log("took", took)
+	t.Log("Processes() took", time.Since(start))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("found", len(procs), "processes")
+
+	t.Log("Found", len(procs), "processes.")
 	for _, proc := range procs {
 		info, err := proc.Info()
 		if err != nil {
+			cause := errors.Cause(err)
+			if os.IsPermission(cause) || syscall.ESRCH == cause {
+				// The process may no longer exist by the time we try fetching
+				// additional information so ignore ESRCH (no such process).
+				continue
+			}
 			t.Fatal(err)
 		}
-		t.Logf("pid=%v name='%s' exe='%s' args=%+v ppid=%d cwd='%s' start_time=%v", info.PID, info.Name, info.Exe, info.Args, info.PPID, info.CWD, info.StartTime)
+		t.Logf("pid=%v name='%s' exe='%s' args=%+v ppid=%d cwd='%s' start_time=%v",
+			info.PID, info.Name, info.Exe, info.Args, info.PPID, info.CWD,
+			info.StartTime)
 	}
 
 }

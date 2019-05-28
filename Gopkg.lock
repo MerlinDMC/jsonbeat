@@ -150,7 +150,7 @@
   version = "v1.0.2"
 
 [[projects]]
-  digest = "1:40ee799f738f2d8f15af253a864e7e5bb74b6813e502509f09dbcac9258caf2d"
+  digest = "1:6518981553d814bbdbd4540896afeb70acc646900132642535deafa86e4400ab"
   name = "github.com/elastic/beats"
   packages = [
     "filebeat/generator",
@@ -250,8 +250,8 @@
     "libbeat/version",
   ]
   pruneopts = ""
-  revision = "da192b7d09af1d735cef19ea7816b8b8a5d4a323"
-  version = "v7.0.0"
+  revision = "03b3db2a1d9d76fdf10475e829fce436c61901e4"
+  version = "v7.1.0"
 
 [[projects]]
   branch = "master"
@@ -300,8 +300,7 @@
   version = "v0.0.5"
 
 [[projects]]
-  branch = "master"
-  digest = "1:2b44aef19ab88400705f78885f109e2082948d6dd7b0a71bcd3024bf362e9312"
+  digest = "1:b68fbec28081df4d1417ed41a1e5d1b1a87574e410cea243c4df5b919a47987e"
   name = "github.com/elastic/go-sysinfo"
   packages = [
     ".",
@@ -313,7 +312,8 @@
     "types",
   ]
   pruneopts = ""
-  revision = "7b021494a9562d0c3f0422d49b9980709c5650e9"
+  revision = "8e0e854621d7e11462d5379fe90d004214482e73"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:c38b6189275bdcc5cf5064e11d8b71c2f931dc961473a3b41fcd85f5512e8caf"
@@ -739,6 +739,7 @@
     "github.com/elastic/beats/libbeat/asset",
     "github.com/elastic/beats/libbeat/beat",
     "github.com/elastic/beats/libbeat/cmd",
+    "github.com/elastic/beats/libbeat/cmd/instance",
     "github.com/elastic/beats/libbeat/common",
     "github.com/elastic/beats/libbeat/logp",
   ]
