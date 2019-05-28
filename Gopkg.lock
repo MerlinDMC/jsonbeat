@@ -150,7 +150,7 @@
   version = "v1.0.2"
 
 [[projects]]
-  digest = "1:6518981553d814bbdbd4540896afeb70acc646900132642535deafa86e4400ab"
+  digest = "1:f7de0d88ee4f5986c9928e391b7db7a74aab4ee1d82c2abf805a7bd11338d495"
   name = "github.com/elastic/beats"
   packages = [
     "filebeat/generator",
@@ -250,8 +250,8 @@
     "libbeat/version",
   ]
   pruneopts = ""
-  revision = "03b3db2a1d9d76fdf10475e829fce436c61901e4"
-  version = "v7.1.0"
+  revision = "3358d9a5a09e3c6709a2d3aaafde628ea34e8419"
+  version = "v7.1.1"
 
 [[projects]]
   branch = "master"
