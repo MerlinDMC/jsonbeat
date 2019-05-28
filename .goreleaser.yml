@@ -24,7 +24,8 @@ builds:
     hooks:
       pre: ./scripts/update.sh
 
-archive:
+archives:
+- id: jsonbeat
   replacements:
     darwin: Darwin
     linux: Linux
