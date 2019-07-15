@@ -150,10 +150,9 @@
   version = "v1.0.2"
 
 [[projects]]
-  digest = "1:f7de0d88ee4f5986c9928e391b7db7a74aab4ee1d82c2abf805a7bd11338d495"
+  digest = "1:b281b414f98ac84a874c6b1417414e3222396dbdda870ce15d90b2a2f731141e"
   name = "github.com/elastic/beats"
   packages = [
-    "filebeat/generator",
     "libbeat/api",
     "libbeat/asset",
     "libbeat/autodiscover",
@@ -181,6 +180,7 @@
     "libbeat/common/docker",
     "libbeat/common/dtfmt",
     "libbeat/common/file",
+    "libbeat/common/flowhash",
     "libbeat/common/fmtstr",
     "libbeat/common/jsontransform",
     "libbeat/common/kafka",
@@ -204,6 +204,7 @@
     "libbeat/logp",
     "libbeat/logp/configure",
     "libbeat/management",
+    "libbeat/mapping",
     "libbeat/metric/system/cpu",
     "libbeat/metric/system/host",
     "libbeat/metric/system/memory",
@@ -234,9 +235,16 @@
     "libbeat/processors/add_host_metadata",
     "libbeat/processors/add_kubernetes_metadata",
     "libbeat/processors/add_locale",
+    "libbeat/processors/add_observer_metadata",
     "libbeat/processors/add_process_metadata",
+    "libbeat/processors/checks",
+    "libbeat/processors/communityid",
+    "libbeat/processors/convert",
     "libbeat/processors/dissect",
     "libbeat/processors/dns",
+    "libbeat/processors/extract_array",
+    "libbeat/processors/timeseries",
+    "libbeat/processors/util",
     "libbeat/publisher",
     "libbeat/publisher/includes",
     "libbeat/publisher/pipeline",
@@ -250,8 +258,8 @@
     "libbeat/version",
   ]
   pruneopts = ""
-  revision = "3358d9a5a09e3c6709a2d3aaafde628ea34e8419"
-  version = "v7.1.1"
+  revision = "9ba65d864ca37cd32c25b980dbb4020975288fc0"
+  version = "v7.2.0"
 
 [[projects]]
   branch = "master"
@@ -736,7 +744,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/elastic/beats/libbeat/asset",
     "github.com/elastic/beats/libbeat/beat",
     "github.com/elastic/beats/libbeat/cmd",
     "github.com/elastic/beats/libbeat/cmd/instance",
