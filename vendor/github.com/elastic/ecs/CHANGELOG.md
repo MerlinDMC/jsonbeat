@@ -3,6 +3,69 @@
 # CHANGELOG
 All notable changes to this project will be documented in this file based on the [Keep a Changelog](http://keepachangelog.com/) Standard. This project adheres to [Semantic Versioning](http://semver.org/).
 
+
+## [1.2.0](https://github.com/elastic/ecs/compare/v1.1.0...v1.2.0)
+
+### Added
+
+* Added `threat.*` fields to apply a taxonomy to events and alerts. #505
+* Added fields in `log.*` to allow for full Syslog mapping. #525
+* Added `package.*` to installed software packages. #532
+* Added `registered_domain` to `url`, `source`, `destination`, `client`, and `server`. #533
+* Added `top_level_domain` field to `url`, `dns.question`,
+  `source`, `destination`, `client`, and `server`. #542, #572
+* Added `group.domain` field. #547
+* Added `url.extension`. #551, #573
+* Added `observer.name` and `observer.product`. #557, #571
+* Added `dns.question.subdomain` field. #561, #574
+* Added `error.stack_trace` field. #562
+* Added `log.origin.file.name`, `log.origin.function` and `log.origin.file.line` fields. #563, #568
+* Added `service.node.name` to allow distinction between different nodes of the
+  same service running on the same host. #565
+* Added `error.type` field. #566
+
+
+## [1.1.0](https://github.com/elastic/ecs/compare/v1.0.1...v1.1.0)
+
+### Added
+
+* Added `as` fields for Autonomous System information (i.e. ASN). #341
+* Added field formats to all `.bytes` fields and `event.duration`. #385, #425
+* Added `hash.*` field set. #426
+* Added `dns.*` field set, to describe DNS traffic. #438
+* Added `event.code`, `event.sequence` and `event.provider`. #439
+* Added `file.name` and `file.directory`. #441
+* Added `file.created`, and `file.accessed`. #445
+* Added `process.uptime` and `host.uptime` fields. #477
+* Added `domain` field to user. #486
+* Added `.nat.ip` and `.nat.port` to `source`, `destination`, `client` and `server`. #491
+* Added `process.thread.name` field. #517
+* Added `trace.id` and `transaction.id` fields for tracing across different services. #519
+* Added `log.logger` field. #521
+
+### Improvements
+
+* Added examples and improved definitions of many `file` fields. #441
+* Changed the `service.id` description so it works better for clustered services. #502
+
+
+## [1.0.1](https://github.com/elastic/ecs/compare/v1.0.0...v1.0.1)
+
+### Added
+
+* Add generated source code for Go. #249
+* Translate the documentation from README.md, to the main website. #266, #334, #400, #430, #437
+* New generator that supports reusable fields, for files based on ECS.
+  It generates schema.csv, Elasticsearch 6 and 7 templates, and field documentation
+  for the main website. #336
+* Generator for the asciidoc rendering of field definitions. #347
+* Generator for the Beats fields.ecs.yml file. #379
+* Remove many legacy generated files. #399
+* Specify static output format for event.duration. #425
+* Format port numbers and numeric IDs as strings. #454
+* Add example for `process.pid` and `process.ppid`. #464, #470
+
+
 ## [1.0.0](https://github.com/elastic/ecs/compare/v1.0.0-beta2...v1.0.0)
 
 ### Breaking changes
@@ -97,6 +160,7 @@ All notable changes to this project will be documented in this file based on the
 * Clarify that source/destination should be filled, even if client/server is
   being used. #265
 
+
 ## [1.0.0-beta1](https://github.com/elastic/ecs/compare/v0.1.0...v1.0.0-beta1)
 
 ### Breaking changes
@@ -148,6 +212,7 @@ All notable changes to this project will be documented in this file based on the
 
 * Remove duplicate definitions of the reuseable `os` field set from `host.os` and
   `user_agent.os`.  #168
+
 
 ## 0.1.0
 

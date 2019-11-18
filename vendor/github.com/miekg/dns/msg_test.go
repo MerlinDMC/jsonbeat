@@ -220,11 +220,11 @@ func TestUnpackDomainName(t *testing.T) {
 
 func TestPackDomainNameCompressionMap(t *testing.T) {
 	expected := map[string]struct{}{
-		`www\.this.is.\131an.example.org.`: struct{}{},
-		`is.\131an.example.org.`:           struct{}{},
-		`\131an.example.org.`:              struct{}{},
-		`example.org.`:                     struct{}{},
-		`org.`:                             struct{}{},
+		`www\.this.is.\131an.example.org.`: {},
+		`is.\131an.example.org.`:           {},
+		`\131an.example.org.`:              {},
+		`example.org.`:                     {},
+		`org.`:                             {},
 	}
 
 	msg := make([]byte, 256)
@@ -303,6 +303,23 @@ func TestPackUnpackManyCompressionPointers(t *testing.T) {
 		var m2 Msg
 		if err := m2.Unpack(b); err != nil {
 			t.Fatalf("Unpack failed for %q and %d records with: %v", domain, len(m.Answer), err)
+		}
+	}
+}
+
+func TestLenDynamicA(t *testing.T) {
+	for _, rr := range []RR{
+		testRR("example.org. A"),
+		testRR("example.org. AAAA"),
+		testRR("example.org. L32"),
+	} {
+		msg := make([]byte, Len(rr))
+		off, err := PackRR(rr, msg, 0, nil, false)
+		if err != nil {
+			t.Fatalf("PackRR failed for %T: %v", rr, err)
+		}
+		if off != len(msg) {
+			t.Errorf("Len(rr) wrong for %T: Len(rr) = %d, PackRR(rr) = %d", rr, len(msg), off)
 		}
 	}
 }

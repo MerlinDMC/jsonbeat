@@ -543,6 +543,10 @@ example.com.   DNAME 10 ; TTL=314 after second $TTL
 			continue
 		}
 		expected := reCaseFromComment.FindStringSubmatch(record.Comment)
+		if len(expected) != 3 {
+			t.Errorf("regexp didn't match for record %d", i)
+			continue
+		}
 		expectedTTL, _ := strconv.ParseUint(expected[1], 10, 32)
 		ttl := record.RR.Header().Ttl
 		if ttl != uint32(expectedTTL) {
@@ -1208,7 +1212,6 @@ func TestNewPrivateKey(t *testing.T) {
 		{ECDSAP384SHA384, 384},
 		{RSASHA1, 1024},
 		{RSASHA256, 2048},
-		{DSA, 1024},
 		{ED25519, 256},
 	}
 
@@ -1565,5 +1568,19 @@ func TestBad(t *testing.T) {
 		if _, err = NewRR(s); err == nil {
 			t.Errorf("correctly parsed %q", s)
 		}
+	}
+}
+
+func TestNULLRecord(t *testing.T) {
+	// packet captured from iodine
+	packet := `8116840000010001000000000569627a6c700474657374046d69656b026e6c00000a0001c00c000a0001000000000005497f000001`
+	data, _ := hex.DecodeString(packet)
+	msg := new(Msg)
+	err := msg.Unpack(data)
+	if err != nil {
+		t.Fatalf("Failed to unpack NULL record")
+	}
+	if _, ok := msg.Answer[0].(*NULL); !ok {
+		t.Fatalf("Expected packet to contain NULL record")
 	}
 }

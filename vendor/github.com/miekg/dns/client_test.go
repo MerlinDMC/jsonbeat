@@ -7,7 +7,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 )
@@ -485,49 +484,34 @@ func TestTimeout(t *testing.T) {
 	m := new(Msg)
 	m.SetQuestion("miek.nl.", TypeTXT)
 
-	// Use a channel + timeout to ensure we don't get stuck if the
-	// Client Timeout is not working properly
-	done := make(chan struct{}, 2)
+	runTest := func(name string, exchange func(m *Msg, addr string, timeout time.Duration) (*Msg, time.Duration, error)) {
+		t.Run(name, func(t *testing.T) {
+			start := time.Now()
 
-	timeout := time.Millisecond
-	allowable := timeout + 10*time.Millisecond
-	abortAfter := timeout + 100*time.Millisecond
+			timeout := time.Millisecond
+			allowable := timeout + 10*time.Millisecond
 
-	start := time.Now()
+			_, _, err := exchange(m, addrstr, timeout)
+			if err == nil {
+				t.Errorf("no timeout using Client.%s", name)
+			}
 
-	go func() {
+			length := time.Since(start)
+			if length > allowable {
+				t.Errorf("exchange took longer %v than specified Timeout %v", length, allowable)
+			}
+		})
+	}
+	runTest("Exchange", func(m *Msg, addr string, timeout time.Duration) (*Msg, time.Duration, error) {
 		c := &Client{Timeout: timeout}
-		_, _, err := c.Exchange(m, addrstr)
-		if err == nil {
-			t.Error("no timeout using Client.Exchange")
-		}
-		done <- struct{}{}
-	}()
-
-	go func() {
+		return c.Exchange(m, addr)
+	})
+	runTest("ExchangeContext", func(m *Msg, addr string, timeout time.Duration) (*Msg, time.Duration, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
-		c := &Client{}
-		_, _, err := c.ExchangeContext(ctx, m, addrstr)
-		if err == nil {
-			t.Error("no timeout using Client.ExchangeContext")
-		}
-		done <- struct{}{}
-	}()
 
-	// Wait for both the Exchange and ExchangeContext tests to be done.
-	for i := 0; i < 2; i++ {
-		select {
-		case <-done:
-		case <-time.After(abortAfter):
-		}
-	}
-
-	length := time.Since(start)
-
-	if length > allowable {
-		t.Errorf("exchange took longer %v than specified Timeout %v", length, allowable)
-	}
+		return new(Client).ExchangeContext(ctx, m, addrstr)
+	})
 }
 
 // Check that responses from deduplicated requests aren't shared between callers
@@ -536,17 +520,13 @@ func TestConcurrentExchanges(t *testing.T) {
 	cases[0] = new(Msg)
 	cases[1] = new(Msg)
 	cases[1].Truncated = true
-	for _, m := range cases {
-		block := make(chan struct{})
-		waiting := make(chan struct{})
 
+	for _, m := range cases {
 		mm := m // redeclare m so as not to trip the race detector
 		handler := func(w ResponseWriter, req *Msg) {
 			r := mm.Copy()
 			r.SetReply(req)
 
-			waiting <- struct{}{}
-			<-block
 			w.WriteMsg(r)
 		}
 
@@ -561,29 +541,24 @@ func TestConcurrentExchanges(t *testing.T) {
 
 		m := new(Msg)
 		m.SetQuestion("miek.nl.", TypeSRV)
+
 		c := &Client{
 			SingleInflight: true,
 		}
-		r := make([]*Msg, 2)
+		// Force this client to always return the same request,
+		// even though we're querying sequentially. Running the
+		// Exchange calls below concurrently can fail due to
+		// goroutine scheduling, but this simulates the same
+		// outcome.
+		c.group.dontDeleteForTesting = true
 
-		var wg sync.WaitGroup
-		wg.Add(len(r))
-		for i := 0; i < len(r); i++ {
-			go func(i int) {
-				defer wg.Done()
-				r[i], _, _ = c.Exchange(m.Copy(), addrstr)
-				if r[i] == nil {
-					t.Errorf("response %d is nil", i)
-				}
-			}(i)
+		r := make([]*Msg, 2)
+		for i := range r {
+			r[i], _, _ = c.Exchange(m.Copy(), addrstr)
+			if r[i] == nil {
+				t.Errorf("response %d is nil", i)
+			}
 		}
-		select {
-		case <-waiting:
-		case <-time.After(time.Second):
-			t.FailNow()
-		}
-		close(block)
-		wg.Wait()
 
 		if r[0] == r[1] {
 			t.Errorf("got same response, expected non-shared responses")

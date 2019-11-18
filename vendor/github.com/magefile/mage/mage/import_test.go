@@ -22,11 +22,11 @@ func TestMageImportsList(t *testing.T) {
 	actual := stdout.String()
 	expected := `
 Targets:
-  root               
-  zz:nS:deploy2*     deploys stuff.
-  zz:buildSubdir2    Builds stuff.
-  nS:deploy          deploys stuff.
   buildSubdir        Builds stuff.
+  ns:deploy          deploys stuff.
+  root               
+  zz:buildSubdir2    Builds stuff.
+  zz:ns:deploy2*     deploys stuff.
 
 * default target
 `[1:]

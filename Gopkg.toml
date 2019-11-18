@@ -23,11 +23,11 @@
 
 [[constraint]]
   name = "github.com/elastic/beats"
-  version = "=v7.3.0"
+  version = "=v7.4.2"
 
 [[override]]
   name = "github.com/Shopify/sarama"
-  version = "=1.20.1"
+  version = "=1.23.1"
 
 [[override]]
   name = "github.com/elastic/go-txfile"
@@ -40,3 +40,7 @@
 [[override]]
   name = "github.com/elastic/go-sysinfo"
   version = "=1.0.2"
+
+[[override]]
+  name = "golang.org/x/sys"
+  revision = "16072639606ea9e22c7d86e4cbd6af6314f4193c"
