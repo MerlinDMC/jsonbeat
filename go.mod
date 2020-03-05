@@ -1,6 +1,6 @@
 module github.com/MerlinDMC/jsonbeat
 
-go 1.12
+go 1.13
 
 replace github.com/dop251/goja => github.com/andrewkroh/goja v0.0.0-20190128172624-dd2ac4456e20
 
@@ -13,6 +13,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/Shopify/sarama v1.24.1 // indirect
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 // indirect
+	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/dlclark/regexp2 v1.2.0 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
@@ -22,7 +23,7 @@ require (
 	github.com/dop251/goja v0.0.0-00010101000000-000000000000 // indirect
 	github.com/dop251/goja_nodejs v0.0.0-20171011081505-adff31b136e6 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
-	github.com/elastic/beats v7.5.1+incompatible
+	github.com/elastic/beats v7.6.1+incompatible
 	github.com/elastic/ecs v1.4.0 // indirect
 	github.com/elastic/go-lumber v0.1.0 // indirect
 	github.com/elastic/go-seccomp-bpf v1.1.0 // indirect
@@ -33,6 +34,7 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/garyburd/redigo v1.6.0 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
+	github.com/gofrs/flock v0.7.1 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
@@ -55,9 +57,7 @@ require (
 	golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	google.golang.org/grpc v1.26.0 // indirect
-	gopkg.in/yaml.v2 v2.2.7 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
-	k8s.io/api v0.17.0 // indirect
-	k8s.io/client-go v12.0.0+incompatible // indirect
+	k8s.io/client-go v0.17.3 // indirect
 	k8s.io/utils v0.0.0-20191218082557-f07c713de883 // indirect
 )
