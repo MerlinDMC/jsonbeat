@@ -1,24 +1,22 @@
-# github.com/BurntSushi/toml v0.3.1
-github.com/BurntSushi/toml
-# github.com/Microsoft/go-winio v0.4.14
+# github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
-# github.com/Shopify/sarama v1.24.1
+# github.com/Shopify/sarama v0.0.0-00010101000000-000000000000 => github.com/elastic/sarama v0.0.0-20191122160421-355d120d0970
 github.com/Shopify/sarama
-# github.com/cespare/xxhash v1.1.0
-github.com/cespare/xxhash
-# github.com/containerd/containerd v1.3.2
+# github.com/cespare/xxhash/v2 v2.1.1
+github.com/cespare/xxhash/v2
+# github.com/containerd/containerd v1.3.3
 github.com/containerd/containerd/errdefs
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/dlclark/regexp2 v1.2.0
+# github.com/dlclark/regexp2 v1.1.7-0.20171009020623-7632a260cbaf
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
 # github.com/docker/distribution v2.7.1+incompatible
 github.com/docker/distribution/digestset
 github.com/docker/distribution/reference
 github.com/docker/distribution/registry/api/errcode
-# github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-20191113042239-ea84732a7725
+# github.com/docker/docker v1.4.2-0.20170802015333-8af4db6f002a => github.com/docker/engine v0.0.0-20191113042239-ea84732a7725
 github.com/docker/docker/api
 github.com/docker/docker/api/types
 github.com/docker/docker/api/types/blkiodev
@@ -51,7 +49,7 @@ github.com/dop251/goja/parser
 github.com/dop251/goja/token
 # github.com/dop251/goja_nodejs v0.0.0-20171011081505-adff31b136e6
 github.com/dop251/goja_nodejs/require
-# github.com/dustin/go-humanize v1.0.0
+# github.com/dustin/go-humanize v0.0.0-20171111073723-bb3d318650d4
 github.com/dustin/go-humanize
 # github.com/eapache/go-resiliency v1.1.0
 github.com/eapache/go-resiliency/breaker
@@ -59,119 +57,123 @@ github.com/eapache/go-resiliency/breaker
 github.com/eapache/go-xerial-snappy
 # github.com/eapache/queue v1.1.0
 github.com/eapache/queue
-# github.com/elastic/beats v7.6.1+incompatible
-github.com/elastic/beats/libbeat/api
-github.com/elastic/beats/libbeat/api/npipe
-github.com/elastic/beats/libbeat/asset
-github.com/elastic/beats/libbeat/autodiscover
-github.com/elastic/beats/libbeat/autodiscover/appenders/config
-github.com/elastic/beats/libbeat/autodiscover/builder
-github.com/elastic/beats/libbeat/autodiscover/meta
-github.com/elastic/beats/libbeat/autodiscover/providers/docker
-github.com/elastic/beats/libbeat/autodiscover/providers/jolokia
-github.com/elastic/beats/libbeat/autodiscover/providers/kubernetes
-github.com/elastic/beats/libbeat/autodiscover/template
-github.com/elastic/beats/libbeat/beat
-github.com/elastic/beats/libbeat/cfgfile
-github.com/elastic/beats/libbeat/cloudid
-github.com/elastic/beats/libbeat/cmd
-github.com/elastic/beats/libbeat/cmd/export
-github.com/elastic/beats/libbeat/cmd/instance
-github.com/elastic/beats/libbeat/cmd/test
-github.com/elastic/beats/libbeat/common
-github.com/elastic/beats/libbeat/common/atomic
-github.com/elastic/beats/libbeat/common/backoff
-github.com/elastic/beats/libbeat/common/bus
-github.com/elastic/beats/libbeat/common/cfgtype
-github.com/elastic/beats/libbeat/common/cfgwarn
-github.com/elastic/beats/libbeat/common/cli
-github.com/elastic/beats/libbeat/common/docker
-github.com/elastic/beats/libbeat/common/dtfmt
-github.com/elastic/beats/libbeat/common/file
-github.com/elastic/beats/libbeat/common/flowhash
-github.com/elastic/beats/libbeat/common/fmtstr
-github.com/elastic/beats/libbeat/common/jsontransform
-github.com/elastic/beats/libbeat/common/kafka
-github.com/elastic/beats/libbeat/common/kubernetes
-github.com/elastic/beats/libbeat/common/kubernetes/metadata
-github.com/elastic/beats/libbeat/common/match
-github.com/elastic/beats/libbeat/common/reload
-github.com/elastic/beats/libbeat/common/safemapstr
-github.com/elastic/beats/libbeat/common/schema
-github.com/elastic/beats/libbeat/common/schema/mapstriface
-github.com/elastic/beats/libbeat/common/seccomp
-github.com/elastic/beats/libbeat/common/streambuf
-github.com/elastic/beats/libbeat/common/terminal
-github.com/elastic/beats/libbeat/common/transport/tlscommon
-github.com/elastic/beats/libbeat/conditions
-github.com/elastic/beats/libbeat/dashboards
-github.com/elastic/beats/libbeat/feature
-github.com/elastic/beats/libbeat/idxmgmt
-github.com/elastic/beats/libbeat/idxmgmt/ilm
-github.com/elastic/beats/libbeat/keystore
-github.com/elastic/beats/libbeat/kibana
-github.com/elastic/beats/libbeat/logp
-github.com/elastic/beats/libbeat/logp/configure
-github.com/elastic/beats/libbeat/management
-github.com/elastic/beats/libbeat/mapping
-github.com/elastic/beats/libbeat/metric/system/cpu
-github.com/elastic/beats/libbeat/metric/system/host
-github.com/elastic/beats/libbeat/metric/system/memory
-github.com/elastic/beats/libbeat/metric/system/process
-github.com/elastic/beats/libbeat/monitoring
-github.com/elastic/beats/libbeat/monitoring/adapter
-github.com/elastic/beats/libbeat/monitoring/report
-github.com/elastic/beats/libbeat/monitoring/report/elasticsearch
-github.com/elastic/beats/libbeat/monitoring/report/log
-github.com/elastic/beats/libbeat/outputs
-github.com/elastic/beats/libbeat/outputs/codec
-github.com/elastic/beats/libbeat/outputs/codec/format
-github.com/elastic/beats/libbeat/outputs/codec/json
-github.com/elastic/beats/libbeat/outputs/console
-github.com/elastic/beats/libbeat/outputs/elasticsearch
-github.com/elastic/beats/libbeat/outputs/fileout
-github.com/elastic/beats/libbeat/outputs/kafka
-github.com/elastic/beats/libbeat/outputs/logstash
-github.com/elastic/beats/libbeat/outputs/outil
-github.com/elastic/beats/libbeat/outputs/redis
-github.com/elastic/beats/libbeat/outputs/transport
-github.com/elastic/beats/libbeat/paths
-github.com/elastic/beats/libbeat/plugin
-github.com/elastic/beats/libbeat/processors
-github.com/elastic/beats/libbeat/processors/actions
-github.com/elastic/beats/libbeat/processors/add_cloud_metadata
-github.com/elastic/beats/libbeat/processors/add_docker_metadata
-github.com/elastic/beats/libbeat/processors/add_host_metadata
-github.com/elastic/beats/libbeat/processors/add_id
-github.com/elastic/beats/libbeat/processors/add_id/generator
-github.com/elastic/beats/libbeat/processors/add_kubernetes_metadata
-github.com/elastic/beats/libbeat/processors/add_locale
-github.com/elastic/beats/libbeat/processors/add_observer_metadata
-github.com/elastic/beats/libbeat/processors/add_process_metadata
-github.com/elastic/beats/libbeat/processors/checks
-github.com/elastic/beats/libbeat/processors/communityid
-github.com/elastic/beats/libbeat/processors/convert
-github.com/elastic/beats/libbeat/processors/dissect
-github.com/elastic/beats/libbeat/processors/dns
-github.com/elastic/beats/libbeat/processors/extract_array
-github.com/elastic/beats/libbeat/processors/fingerprint
-github.com/elastic/beats/libbeat/processors/registered_domain
-github.com/elastic/beats/libbeat/processors/script/javascript
-github.com/elastic/beats/libbeat/processors/script/javascript/module/processor
-github.com/elastic/beats/libbeat/processors/timeseries
-github.com/elastic/beats/libbeat/processors/util
-github.com/elastic/beats/libbeat/publisher
-github.com/elastic/beats/libbeat/publisher/includes
-github.com/elastic/beats/libbeat/publisher/pipeline
-github.com/elastic/beats/libbeat/publisher/processing
-github.com/elastic/beats/libbeat/publisher/queue
-github.com/elastic/beats/libbeat/publisher/queue/memqueue
-github.com/elastic/beats/libbeat/publisher/queue/spool
-github.com/elastic/beats/libbeat/service
-github.com/elastic/beats/libbeat/template
-github.com/elastic/beats/libbeat/testing
-github.com/elastic/beats/libbeat/version
-# github.com/elastic/ecs v1.4.0
+# github.com/elastic/beats/v7 v7.7.0
+github.com/elastic/beats/v7/libbeat/api
+github.com/elastic/beats/v7/libbeat/api/npipe
+github.com/elastic/beats/v7/libbeat/asset
+github.com/elastic/beats/v7/libbeat/autodiscover
+github.com/elastic/beats/v7/libbeat/autodiscover/appenders/config
+github.com/elastic/beats/v7/libbeat/autodiscover/builder
+github.com/elastic/beats/v7/libbeat/autodiscover/meta
+github.com/elastic/beats/v7/libbeat/autodiscover/providers/docker
+github.com/elastic/beats/v7/libbeat/autodiscover/providers/jolokia
+github.com/elastic/beats/v7/libbeat/autodiscover/providers/kubernetes
+github.com/elastic/beats/v7/libbeat/autodiscover/template
+github.com/elastic/beats/v7/libbeat/beat
+github.com/elastic/beats/v7/libbeat/cfgfile
+github.com/elastic/beats/v7/libbeat/cloudid
+github.com/elastic/beats/v7/libbeat/cmd
+github.com/elastic/beats/v7/libbeat/cmd/export
+github.com/elastic/beats/v7/libbeat/cmd/instance
+github.com/elastic/beats/v7/libbeat/cmd/test
+github.com/elastic/beats/v7/libbeat/common
+github.com/elastic/beats/v7/libbeat/common/atomic
+github.com/elastic/beats/v7/libbeat/common/backoff
+github.com/elastic/beats/v7/libbeat/common/bus
+github.com/elastic/beats/v7/libbeat/common/cfgtype
+github.com/elastic/beats/v7/libbeat/common/cfgwarn
+github.com/elastic/beats/v7/libbeat/common/cli
+github.com/elastic/beats/v7/libbeat/common/docker
+github.com/elastic/beats/v7/libbeat/common/dtfmt
+github.com/elastic/beats/v7/libbeat/common/file
+github.com/elastic/beats/v7/libbeat/common/flowhash
+github.com/elastic/beats/v7/libbeat/common/fmtstr
+github.com/elastic/beats/v7/libbeat/common/jsontransform
+github.com/elastic/beats/v7/libbeat/common/kafka
+github.com/elastic/beats/v7/libbeat/common/kubernetes
+github.com/elastic/beats/v7/libbeat/common/kubernetes/metadata
+github.com/elastic/beats/v7/libbeat/common/match
+github.com/elastic/beats/v7/libbeat/common/reload
+github.com/elastic/beats/v7/libbeat/common/safemapstr
+github.com/elastic/beats/v7/libbeat/common/schema
+github.com/elastic/beats/v7/libbeat/common/schema/mapstriface
+github.com/elastic/beats/v7/libbeat/common/seccomp
+github.com/elastic/beats/v7/libbeat/common/streambuf
+github.com/elastic/beats/v7/libbeat/common/terminal
+github.com/elastic/beats/v7/libbeat/common/transport
+github.com/elastic/beats/v7/libbeat/common/transport/kerberos
+github.com/elastic/beats/v7/libbeat/common/transport/tlscommon
+github.com/elastic/beats/v7/libbeat/conditions
+github.com/elastic/beats/v7/libbeat/dashboards
+github.com/elastic/beats/v7/libbeat/esleg/eslegclient
+github.com/elastic/beats/v7/libbeat/feature
+github.com/elastic/beats/v7/libbeat/idxmgmt
+github.com/elastic/beats/v7/libbeat/idxmgmt/ilm
+github.com/elastic/beats/v7/libbeat/keystore
+github.com/elastic/beats/v7/libbeat/kibana
+github.com/elastic/beats/v7/libbeat/logp
+github.com/elastic/beats/v7/libbeat/logp/configure
+github.com/elastic/beats/v7/libbeat/management
+github.com/elastic/beats/v7/libbeat/mapping
+github.com/elastic/beats/v7/libbeat/metric/system/cpu
+github.com/elastic/beats/v7/libbeat/metric/system/host
+github.com/elastic/beats/v7/libbeat/metric/system/memory
+github.com/elastic/beats/v7/libbeat/metric/system/process
+github.com/elastic/beats/v7/libbeat/monitoring
+github.com/elastic/beats/v7/libbeat/monitoring/adapter
+github.com/elastic/beats/v7/libbeat/monitoring/report
+github.com/elastic/beats/v7/libbeat/monitoring/report/elasticsearch
+github.com/elastic/beats/v7/libbeat/monitoring/report/log
+github.com/elastic/beats/v7/libbeat/outputs
+github.com/elastic/beats/v7/libbeat/outputs/codec
+github.com/elastic/beats/v7/libbeat/outputs/codec/format
+github.com/elastic/beats/v7/libbeat/outputs/codec/json
+github.com/elastic/beats/v7/libbeat/outputs/console
+github.com/elastic/beats/v7/libbeat/outputs/elasticsearch
+github.com/elastic/beats/v7/libbeat/outputs/fileout
+github.com/elastic/beats/v7/libbeat/outputs/kafka
+github.com/elastic/beats/v7/libbeat/outputs/logstash
+github.com/elastic/beats/v7/libbeat/outputs/outil
+github.com/elastic/beats/v7/libbeat/outputs/redis
+github.com/elastic/beats/v7/libbeat/paths
+github.com/elastic/beats/v7/libbeat/plugin
+github.com/elastic/beats/v7/libbeat/processors
+github.com/elastic/beats/v7/libbeat/processors/actions
+github.com/elastic/beats/v7/libbeat/processors/add_cloud_metadata
+github.com/elastic/beats/v7/libbeat/processors/add_docker_metadata
+github.com/elastic/beats/v7/libbeat/processors/add_host_metadata
+github.com/elastic/beats/v7/libbeat/processors/add_id
+github.com/elastic/beats/v7/libbeat/processors/add_id/generator
+github.com/elastic/beats/v7/libbeat/processors/add_kubernetes_metadata
+github.com/elastic/beats/v7/libbeat/processors/add_locale
+github.com/elastic/beats/v7/libbeat/processors/add_observer_metadata
+github.com/elastic/beats/v7/libbeat/processors/add_process_metadata
+github.com/elastic/beats/v7/libbeat/processors/checks
+github.com/elastic/beats/v7/libbeat/processors/communityid
+github.com/elastic/beats/v7/libbeat/processors/convert
+github.com/elastic/beats/v7/libbeat/processors/dissect
+github.com/elastic/beats/v7/libbeat/processors/dns
+github.com/elastic/beats/v7/libbeat/processors/extract_array
+github.com/elastic/beats/v7/libbeat/processors/fingerprint
+github.com/elastic/beats/v7/libbeat/processors/registered_domain
+github.com/elastic/beats/v7/libbeat/processors/script/javascript
+github.com/elastic/beats/v7/libbeat/processors/script/javascript/module/processor
+github.com/elastic/beats/v7/libbeat/processors/timeseries
+github.com/elastic/beats/v7/libbeat/processors/translate_sid
+github.com/elastic/beats/v7/libbeat/processors/util
+github.com/elastic/beats/v7/libbeat/publisher
+github.com/elastic/beats/v7/libbeat/publisher/includes
+github.com/elastic/beats/v7/libbeat/publisher/pipeline
+github.com/elastic/beats/v7/libbeat/publisher/processing
+github.com/elastic/beats/v7/libbeat/publisher/queue
+github.com/elastic/beats/v7/libbeat/publisher/queue/memqueue
+github.com/elastic/beats/v7/libbeat/publisher/queue/spool
+github.com/elastic/beats/v7/libbeat/service
+github.com/elastic/beats/v7/libbeat/template
+github.com/elastic/beats/v7/libbeat/testing
+github.com/elastic/beats/v7/libbeat/version
+github.com/elastic/beats/v7/winlogbeat/sys
+# github.com/elastic/ecs v1.5.0
 github.com/elastic/ecs/code/go/ecs
 # github.com/elastic/go-lumber v0.1.0
 github.com/elastic/go-lumber/client/v2
@@ -187,7 +189,7 @@ github.com/elastic/go-structform/internal/unsafe
 github.com/elastic/go-structform/json
 github.com/elastic/go-structform/ubjson
 github.com/elastic/go-structform/visitors
-# github.com/elastic/go-sysinfo v1.2.0
+# github.com/elastic/go-sysinfo v1.3.0
 github.com/elastic/go-sysinfo
 github.com/elastic/go-sysinfo/internal/registry
 github.com/elastic/go-sysinfo/providers/darwin
@@ -195,10 +197,8 @@ github.com/elastic/go-sysinfo/providers/linux
 github.com/elastic/go-sysinfo/providers/shared
 github.com/elastic/go-sysinfo/providers/windows
 github.com/elastic/go-sysinfo/types
-# github.com/elastic/go-txfile v0.0.6
+# github.com/elastic/go-txfile v0.0.7
 github.com/elastic/go-txfile
-github.com/elastic/go-txfile/dev-tools/lib/mage/gotool
-github.com/elastic/go-txfile/dev-tools/lib/mage/mgenv
 github.com/elastic/go-txfile/dev-tools/lib/mage/xbuild
 github.com/elastic/go-txfile/internal/cleanup
 github.com/elastic/go-txfile/internal/invariant
@@ -209,14 +209,14 @@ github.com/elastic/go-txfile/internal/vfs
 github.com/elastic/go-txfile/internal/vfs/osfs
 github.com/elastic/go-txfile/pq
 github.com/elastic/go-txfile/txerr
-# github.com/elastic/go-ucfg v0.7.0
+# github.com/elastic/go-ucfg v0.8.3
 github.com/elastic/go-ucfg
 github.com/elastic/go-ucfg/cfgutil
 github.com/elastic/go-ucfg/flag
-github.com/elastic/go-ucfg/internal/parse
 github.com/elastic/go-ucfg/json
+github.com/elastic/go-ucfg/parse
 github.com/elastic/go-ucfg/yaml
-# github.com/elastic/go-windows v1.0.0
+# github.com/elastic/go-windows v1.0.1
 github.com/elastic/go-windows
 # github.com/elastic/gosigar v0.10.5
 github.com/elastic/gosigar
@@ -224,19 +224,19 @@ github.com/elastic/gosigar/cgroup
 github.com/elastic/gosigar/sys
 github.com/elastic/gosigar/sys/linux
 github.com/elastic/gosigar/sys/windows
-# github.com/fatih/color v1.7.0
+# github.com/fatih/color v1.5.0
 github.com/fatih/color
-# github.com/garyburd/redigo v1.6.0
+# github.com/garyburd/redigo v1.0.1-0.20160525165706-b8dc90050f24
 github.com/garyburd/redigo/internal
 github.com/garyburd/redigo/redis
 # github.com/go-sourcemap/sourcemap v2.1.2+incompatible
 github.com/go-sourcemap/sourcemap
 github.com/go-sourcemap/sourcemap/internal/base64vlq
-# github.com/gofrs/flock v0.7.1
+# github.com/gofrs/flock v0.7.2-0.20190320160742-5135e617513b
 github.com/gofrs/flock
 # github.com/gofrs/uuid v3.2.0+incompatible
 github.com/gofrs/uuid
-# github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d
+# github.com/gogo/protobuf v1.3.1
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/protobuf v1.3.2
@@ -247,7 +247,7 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/golang/snappy v0.0.1
 github.com/golang/snappy
-# github.com/google/go-cmp v0.3.0
+# github.com/google/go-cmp v0.4.0
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -255,27 +255,27 @@ github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
 # github.com/google/gofuzz v1.0.0
 github.com/google/gofuzz
-# github.com/googleapis/gnostic v0.0.0-20170729233727-0c5108395e2d
+# github.com/googleapis/gnostic v0.3.1-0.20190624222214-25d8b0b66985
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
 # github.com/hashicorp/go-uuid v1.0.1
 github.com/hashicorp/go-uuid
-# github.com/hashicorp/golang-lru v0.5.1
+# github.com/hashicorp/golang-lru v0.5.2-0.20190520140433-59383c442f7d
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
-# github.com/imdario/mergo v0.3.8
+# github.com/imdario/mergo v0.3.6
 github.com/imdario/mergo
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/jcmturner/gofork v0.0.0-20190328161633-dc7c13fece03
+# github.com/jcmturner/gofork v1.0.0
 github.com/jcmturner/gofork/encoding/asn1
 github.com/jcmturner/gofork/x/crypto/pbkdf2
 # github.com/joeshaw/multierror v0.0.0-20140124173710-69b34d4ec901
 github.com/joeshaw/multierror
-# github.com/json-iterator/go v1.1.8
+# github.com/json-iterator/go v1.1.7
 github.com/json-iterator/go
-# github.com/klauspost/compress v1.8.2
+# github.com/klauspost/compress v1.9.3-0.20191122130757-c099ac9f21dd
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
@@ -283,56 +283,58 @@ github.com/klauspost/compress/snappy
 github.com/klauspost/compress/zlib
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
-# github.com/klauspost/cpuid v1.2.2
-github.com/klauspost/cpuid
-# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+# github.com/konsorten/go-windows-terminal-sequences v1.0.2
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/magefile/mage v1.9.0
 github.com/magefile/mage/mg
 github.com/magefile/mage/sh
-# github.com/mattn/go-colorable v0.1.4
+# github.com/mattn/go-colorable v0.0.8
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.8
+# github.com/mattn/go-isatty v0.0.2
 github.com/mattn/go-isatty
-# github.com/miekg/dns v1.1.26
+# github.com/miekg/dns v1.1.15
 github.com/miekg/dns
-# github.com/mitchellh/hashstructure v1.0.0
+# github.com/mitchellh/hashstructure v0.0.0-20170116052023-ab25296c0f51
 github.com/mitchellh/hashstructure
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
 github.com/modern-go/reflect2
-# github.com/opencontainers/go-digest v1.0.0-rc1
+# github.com/opencontainers/go-digest v1.0.0-rc1.0.20190228220655-ac19fd6e7483
 github.com/opencontainers/go-digest
-# github.com/opencontainers/image-spec v1.0.1
+# github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
 # github.com/pierrec/lz4 v2.2.6+incompatible
 github.com/pierrec/lz4
 github.com/pierrec/lz4/internal/xxh32
-# github.com/pkg/errors v0.8.1
+# github.com/pkg/errors v0.9.1
 github.com/pkg/errors
-# github.com/prometheus/procfs v0.0.0-20190425082905-87a4384529e0
+# github.com/prometheus/procfs v0.0.9-0.20191208103036-42f6e295b56f
 github.com/prometheus/procfs
-# github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563
+github.com/prometheus/procfs/internal/fs
+github.com/prometheus/procfs/internal/util
+# github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
 github.com/rcrowley/go-metrics
-# github.com/sirupsen/logrus v1.4.1
+# github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
-# github.com/spf13/cobra v0.0.5
+# github.com/spf13/cobra v0.0.3
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.5
+# github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
-# github.com/theckman/go-flock v0.4.0
-github.com/theckman/go-flock
 # github.com/urso/go-bin v0.0.0-20180220135811-781c575c9f0e
 github.com/urso/go-bin
-# go.uber.org/atomic v1.5.0
+# github.com/urso/magetools v0.0.0-20200106130147-61080ed7b22b
+github.com/urso/magetools/clitool
+github.com/urso/magetools/ctrl
+github.com/urso/magetools/fs
+github.com/urso/magetools/gotool
+github.com/urso/magetools/mgenv
+# go.uber.org/atomic v1.3.1
 go.uber.org/atomic
-# go.uber.org/multierr v1.4.0
+# go.uber.org/multierr v1.1.1-0.20170829224307-fb7d312c2c04
 go.uber.org/multierr
-# go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee
-go.uber.org/tools/update-license
-# go.uber.org/zap v1.13.0
+# go.uber.org/zap v1.7.1
 go.uber.org/zap
 go.uber.org/zap/buffer
 go.uber.org/zap/internal/bufferpool
@@ -340,16 +342,13 @@ go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
 go.uber.org/zap/zaptest/observer
-# golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
+# golang.org/x/crypto v0.0.0-20200204104054-c9f3fb736b72
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/md4
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/lint v0.0.0-20190930215403-16217165b5de
-golang.org/x/lint
-golang.org/x/lint/golint
-# golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
+# golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -364,10 +363,10 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/publicsuffix
-# golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
+# golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8
+# golang.org/x/sys v0.0.0-20200102141924-c96a22e43c9c
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
@@ -389,23 +388,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 golang.org/x/time/rate
-# golang.org/x/tools v0.0.0-20191029190741-b9c20aec41a5
-golang.org/x/tools/go/analysis
-golang.org/x/tools/go/analysis/passes/inspect
-golang.org/x/tools/go/ast/astutil
-golang.org/x/tools/go/ast/inspector
-golang.org/x/tools/go/buildutil
-golang.org/x/tools/go/gcexportdata
-golang.org/x/tools/go/internal/gcimporter
-golang.org/x/tools/go/internal/packagesdriver
-golang.org/x/tools/go/packages
-golang.org/x/tools/go/types/objectpath
-golang.org/x/tools/go/types/typeutil
-golang.org/x/tools/internal/fastwalk
-golang.org/x/tools/internal/gopathwalk
-golang.org/x/tools/internal/semver
-golang.org/x/tools/internal/span
-# google.golang.org/appengine v1.5.0
+# google.golang.org/appengine v1.6.5
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
@@ -413,21 +396,21 @@ google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55
+# google.golang.org/genproto v0.0.0-20191230161307-f3c370f40bfb
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.26.0
+# google.golang.org/grpc v1.27.1
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/grpclog
 google.golang.org/grpc/internal
 google.golang.org/grpc/status
-# gopkg.in/inf.v0 v0.9.1
+# gopkg.in/inf.v0 v0.9.0
 gopkg.in/inf.v0
 # gopkg.in/jcmturner/aescts.v1 v1.0.1
 gopkg.in/jcmturner/aescts.v1
 # gopkg.in/jcmturner/dnsutils.v1 v1.0.1
 gopkg.in/jcmturner/dnsutils.v1
-# gopkg.in/jcmturner/gokrb5.v7 v7.2.3
+# gopkg.in/jcmturner/gokrb5.v7 v7.3.0
 gopkg.in/jcmturner/gokrb5.v7/asn1tools
 gopkg.in/jcmturner/gokrb5.v7/client
 gopkg.in/jcmturner/gokrb5.v7/config
@@ -461,38 +444,11 @@ gopkg.in/jcmturner/gokrb5.v7/types
 # gopkg.in/jcmturner/rpc.v1 v1.1.0
 gopkg.in/jcmturner/rpc.v1/mstypes
 gopkg.in/jcmturner/rpc.v1/ndr
-# gopkg.in/yaml.v2 v2.2.8
+# gopkg.in/yaml.v2 v2.2.7
 gopkg.in/yaml.v2
-# honnef.co/go/tools v0.0.1-2019.2.3
-honnef.co/go/tools/arg
-honnef.co/go/tools/cmd/staticcheck
-honnef.co/go/tools/config
-honnef.co/go/tools/deprecated
-honnef.co/go/tools/facts
-honnef.co/go/tools/functions
-honnef.co/go/tools/go/types/typeutil
-honnef.co/go/tools/internal/cache
-honnef.co/go/tools/internal/passes/buildssa
-honnef.co/go/tools/internal/renameio
-honnef.co/go/tools/internal/sharedcheck
-honnef.co/go/tools/lint
-honnef.co/go/tools/lint/lintdsl
-honnef.co/go/tools/lint/lintutil
-honnef.co/go/tools/lint/lintutil/format
-honnef.co/go/tools/loader
-honnef.co/go/tools/printf
-honnef.co/go/tools/simple
-honnef.co/go/tools/ssa
-honnef.co/go/tools/ssautil
-honnef.co/go/tools/staticcheck
-honnef.co/go/tools/staticcheck/vrp
-honnef.co/go/tools/stylecheck
-honnef.co/go/tools/unused
-honnef.co/go/tools/version
 # howett.net/plist v0.0.0-20181124034731-591f970eefbb
 howett.net/plist
-# k8s.io/api v0.17.3
-k8s.io/api/admissionregistration/v1
+# k8s.io/api v0.0.0-20190722141453-b90922c02518
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1
 k8s.io/api/apps/v1beta1
@@ -512,11 +468,8 @@ k8s.io/api/certificates/v1beta1
 k8s.io/api/coordination/v1
 k8s.io/api/coordination/v1beta1
 k8s.io/api/core/v1
-k8s.io/api/discovery/v1alpha1
-k8s.io/api/discovery/v1beta1
 k8s.io/api/events/v1beta1
 k8s.io/api/extensions/v1beta1
-k8s.io/api/flowcontrol/v1alpha1
 k8s.io/api/networking/v1
 k8s.io/api/networking/v1beta1
 k8s.io/api/node/v1alpha1
@@ -532,7 +485,7 @@ k8s.io/api/settings/v1alpha1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.17.3
+# k8s.io/apimachinery v0.0.0-20190719140911-bfcf53abc9f8
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
 k8s.io/apimachinery/pkg/api/resource
@@ -572,11 +525,10 @@ k8s.io/apimachinery/pkg/util/yaml
 k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/client-go v0.17.3
+# k8s.io/client-go v0.0.0-20190620085101-78d2af792bab
 k8s.io/client-go/discovery
 k8s.io/client-go/kubernetes
 k8s.io/client-go/kubernetes/scheme
-k8s.io/client-go/kubernetes/typed/admissionregistration/v1
 k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1
 k8s.io/client-go/kubernetes/typed/apps/v1
 k8s.io/client-go/kubernetes/typed/apps/v1beta1
@@ -596,11 +548,8 @@ k8s.io/client-go/kubernetes/typed/certificates/v1beta1
 k8s.io/client-go/kubernetes/typed/coordination/v1
 k8s.io/client-go/kubernetes/typed/coordination/v1beta1
 k8s.io/client-go/kubernetes/typed/core/v1
-k8s.io/client-go/kubernetes/typed/discovery/v1alpha1
-k8s.io/client-go/kubernetes/typed/discovery/v1beta1
 k8s.io/client-go/kubernetes/typed/events/v1beta1
 k8s.io/client-go/kubernetes/typed/extensions/v1beta1
-k8s.io/client-go/kubernetes/typed/flowcontrol/v1alpha1
 k8s.io/client-go/kubernetes/typed/networking/v1
 k8s.io/client-go/kubernetes/typed/networking/v1beta1
 k8s.io/client-go/kubernetes/typed/node/v1alpha1
@@ -640,11 +589,11 @@ k8s.io/client-go/util/homedir
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
 k8s.io/client-go/util/workqueue
-# k8s.io/klog v1.0.0
+# k8s.io/klog v0.3.4-0.20190719014911-6a023d6d0e09
 k8s.io/klog
-# k8s.io/utils v0.0.0-20191218082557-f07c713de883
+# k8s.io/utils v0.0.0-20190712204705-3dccf664f023
 k8s.io/utils/buffer
 k8s.io/utils/integer
 k8s.io/utils/trace
-# sigs.k8s.io/yaml v1.1.0
+# sigs.k8s.io/yaml v1.1.1-0.20190704183835-4cd0c284b15f
 sigs.k8s.io/yaml

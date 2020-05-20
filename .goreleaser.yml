@@ -19,7 +19,7 @@ builds:
       - BEAT_INDEX_PREFIX=jsonbeat
       - CGO_ENABLED=0
 
-    ldflags: -extldflags="-static" -s -w -X github.com/MerlinDMC/jsonbeat/cmd.Version={{.Major}}.{{.Minor}}.{{.Patch}} -X github.com/MerlinDMC/jsonbeat/vendor/github.com/elastic/beats/libbeat/version.commit={{.Commit}} -X github.com/MerlinDMC/jsonbeat/vendor/github.com/elastic/beats/libbeat/version.buildTime={{.Date}}
+    ldflags: -extldflags="-static" -s -w -X github.com/MerlinDMC/jsonbeat/cmd.Version={{.Major}}.{{.Minor}}.{{.Patch}} -X github.com/MerlinDMC/jsonbeat/vendor/github.com/elastic/beats/v7/libbeat/version.commit={{.Commit}} -X github.com/MerlinDMC/jsonbeat/vendor/github.com/elastic/beats/v7/libbeat/version.buildTime={{.Date}}
 
     hooks:
       pre: ./scripts/update.sh
