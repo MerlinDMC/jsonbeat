@@ -15,4 +15,7 @@ replace (
 	github.com/tonistiigi/fifo => github.com/containerd/fifo v0.0.0-20190816180239-bda0ff6ed73c
 )
 
-require github.com/elastic/beats/v7 v7.7.0
+require (
+	github.com/elastic/beats/v7 v7.8.0
+	github.com/klauspost/cpuid v1.3.1 // indirect
+)
