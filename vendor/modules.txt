@@ -61,7 +61,7 @@ github.com/eapache/go-resiliency/breaker
 github.com/eapache/go-xerial-snappy
 # github.com/eapache/queue v1.1.0
 github.com/eapache/queue
-# github.com/elastic/beats/v7 v7.8.0
+# github.com/elastic/beats/v7 v7.8.1
 github.com/elastic/beats/v7/libbeat/api
 github.com/elastic/beats/v7/libbeat/api/npipe
 github.com/elastic/beats/v7/libbeat/asset
@@ -391,7 +391,7 @@ golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/md4
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
+# golang.org/x/lint v0.0.0-20200130185559-910be7a94367
 golang.org/x/lint
 golang.org/x/lint/golint
 # golang.org/x/net v0.0.0-20200202094626-16171245cfb2
@@ -434,7 +434,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 golang.org/x/time/rate
-# golang.org/x/tools v0.0.0-20191227053925-7b8e75db28f4
+# golang.org/x/tools v0.0.0-20200216192241-b320d3a0f5a2
 golang.org/x/tools/go/analysis
 golang.org/x/tools/go/analysis/passes/inspect
 golang.org/x/tools/go/ast/astutil
@@ -446,9 +446,7 @@ golang.org/x/tools/go/internal/packagesdriver
 golang.org/x/tools/go/packages
 golang.org/x/tools/go/types/objectpath
 golang.org/x/tools/go/types/typeutil
-golang.org/x/tools/internal/fastwalk
-golang.org/x/tools/internal/gopathwalk
-golang.org/x/tools/internal/semver
+golang.org/x/tools/internal/packagesinternal
 # google.golang.org/appengine v1.6.5
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
