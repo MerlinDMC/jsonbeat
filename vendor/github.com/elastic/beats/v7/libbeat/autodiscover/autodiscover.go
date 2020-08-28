@@ -55,7 +55,7 @@ type EventConfigurer interface {
 // new modules when any configured providers does a match
 type Autodiscover struct {
 	bus             bus.Bus
-	defaultPipeline beat.Pipeline
+	defaultPipeline beat.PipelineConnector
 	factory         cfgfile.RunnerFactory
 	configurer      EventConfigurer
 	providers       []Provider
@@ -69,7 +69,7 @@ type Autodiscover struct {
 // NewAutodiscover instantiates and returns a new Autodiscover manager
 func NewAutodiscover(
 	name string,
-	pipeline beat.Pipeline,
+	pipeline beat.PipelineConnector,
 	factory cfgfile.RunnerFactory,
 	configurer EventConfigurer,
 	config *Config,
@@ -191,7 +191,6 @@ func (a *Autodiscover) handleStart(event bus.Event) bool {
 	}
 
 	if a.logger.IsDebug() {
-
 		for _, c := range configs {
 			a.logger.Debugf("Generated config: %+v", common.DebugString(c, true))
 		}
@@ -207,7 +206,9 @@ func (a *Autodiscover) handleStart(event bus.Event) bool {
 
 		err = a.factory.CheckConfig(config)
 		if err != nil {
-			a.logger.Error(errors.Wrap(err, fmt.Sprintf("Auto discover config check failed for config '%s', won't start runner", common.DebugString(config, true))))
+			a.logger.Error(errors.Wrap(err, fmt.Sprintf(
+				"Auto discover config check failed for config '%s', won't start runner",
+				common.DebugString(config, true))))
 			continue
 		}
 

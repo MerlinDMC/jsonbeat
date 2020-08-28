@@ -1,6 +1,6 @@
 module github.com/MerlinDMC/jsonbeat
 
-go 1.13
+go 1.14
 
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v12.2.0+incompatible
@@ -16,6 +16,6 @@ replace (
 )
 
 require (
-	github.com/elastic/beats/v7 v7.8.1
+	github.com/elastic/beats/v7 v7.9.0
 	github.com/klauspost/cpuid v1.3.1 // indirect
 )
