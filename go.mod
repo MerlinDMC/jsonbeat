@@ -16,6 +16,6 @@ replace (
 )
 
 require (
-	github.com/elastic/beats/v7 v7.9.0
+	github.com/elastic/beats/v7 v7.9.2
 	github.com/klauspost/cpuid v1.3.1 // indirect
 )
