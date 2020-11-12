@@ -53,8 +53,20 @@ func (t *Tracer) StartTransactionOptions(name, transactionType string, opts Tran
 	}
 	tx := &Transaction{tracer: t, TransactionData: td}
 
-	tx.Name = name
-	tx.Type = transactionType
+	// Take a snapshot of config that should apply to all spans within the
+	// transaction.
+	instrumentationConfig := t.instrumentationConfig()
+	tx.recording = instrumentationConfig.recording
+	if !tx.recording {
+		return tx
+	}
+
+	tx.maxSpans = instrumentationConfig.maxSpans
+	tx.spanFramesMinDuration = instrumentationConfig.spanFramesMinDuration
+	tx.stackTraceLimit = instrumentationConfig.stackTraceLimit
+	tx.Context.captureHeaders = instrumentationConfig.captureHeaders
+	tx.propagateLegacyHeader = instrumentationConfig.propagateLegacyHeader
+	tx.breakdownMetricsEnabled = t.breakdownMetrics.enabled
 
 	var root bool
 	if opts.TraceContext.Trace.Validate() == nil {
@@ -84,19 +96,31 @@ func (t *Tracer) StartTransactionOptions(name, transactionType string, opts Tran
 		}
 	}
 
-	// Take a snapshot of config that should apply to all spans within the
-	// transaction.
-	instrumentationConfig := t.instrumentationConfig()
-	tx.maxSpans = instrumentationConfig.maxSpans
-	tx.spanFramesMinDuration = instrumentationConfig.spanFramesMinDuration
-	tx.stackTraceLimit = instrumentationConfig.stackTraceLimit
-	tx.Context.captureHeaders = instrumentationConfig.captureHeaders
-	tx.breakdownMetricsEnabled = t.breakdownMetrics.enabled
-	tx.propagateLegacyHeader = instrumentationConfig.propagateLegacyHeader
-
 	if root {
-		sampler := instrumentationConfig.sampler
-		if sampler == nil || sampler.Sample(tx.traceContext) {
+		var result SampleResult
+		if instrumentationConfig.extendedSampler != nil {
+			result = instrumentationConfig.extendedSampler.SampleExtended(SampleParams{
+				TraceContext: tx.traceContext,
+			})
+			if !result.Sampled {
+				// Special case: for unsampled transactions we
+				// report a sample rate of 0, so that we do not
+				// count them in aggregations in the server.
+				// This is necessary to avoid overcounting, as
+				// we will scale the sampled transactions.
+				result.SampleRate = 0
+			}
+			sampleRate := round(1000*result.SampleRate) / 1000
+			tx.traceContext.State = NewTraceState(TraceStateEntry{
+				Key:   elasticTracestateVendorKey,
+				Value: formatElasticTracestateValue(sampleRate),
+			})
+		} else if instrumentationConfig.sampler != nil {
+			result.Sampled = instrumentationConfig.sampler.Sample(tx.traceContext)
+		} else {
+			result.Sampled = true
+		}
+		if result.Sampled {
 			o := tx.traceContext.Options.WithRecorded(true)
 			tx.traceContext.Options = o
 		}
@@ -108,6 +132,9 @@ func (t *Tracer) StartTransactionOptions(name, transactionType string, opts Tran
 		// applications may end up being sampled at a very high rate.
 		tx.traceContext.Options = opts.TraceContext.Options
 	}
+
+	tx.Name = name
+	tx.Type = transactionType
 	tx.timestamp = opts.Start
 	if tx.timestamp.IsZero() {
 		tx.timestamp = time.Now()
@@ -234,10 +261,14 @@ func (tx *Transaction) End() {
 	if tx.ended() {
 		return
 	}
-	if tx.Duration < 0 {
-		tx.Duration = time.Since(tx.timestamp)
+	if tx.recording {
+		if tx.Duration < 0 {
+			tx.Duration = time.Since(tx.timestamp)
+		}
+		tx.enqueue()
+	} else {
+		tx.reset(tx.tracer)
 	}
-	tx.enqueue()
 	tx.TransactionData = nil
 }
 
@@ -291,6 +322,7 @@ type TransactionData struct {
 	// Result holds the transaction result.
 	Result string
 
+	recording               bool
 	maxSpans                int
 	spanFramesMinDuration   time.Duration
 	stackTraceLimit         int

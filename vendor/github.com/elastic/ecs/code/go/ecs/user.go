@@ -24,7 +24,7 @@ package ecs
 // Fields can have one entry or multiple entries. If a user has more than one
 // id, provide an array that includes all of them.
 type User struct {
-	// Unique identifiers of the user.
+	// Unique identifier of the user.
 	ID string `ecs:"id"`
 
 	// Short name or login of the user.
@@ -44,4 +44,7 @@ type User struct {
 	// Name of the directory the user is a member of.
 	// For example, an LDAP or Active Directory domain name.
 	Domain string `ecs:"domain"`
+
+	// Array of user roles at the time of the event.
+	Roles string `ecs:"roles"`
 }

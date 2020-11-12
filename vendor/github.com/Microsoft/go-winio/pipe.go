@@ -182,13 +182,14 @@ func (s pipeAddress) String() string {
 }
 
 // tryDialPipe attempts to dial the pipe at `path` until `ctx` cancellation or timeout.
-func tryDialPipe(ctx context.Context, path *string) (syscall.Handle, error) {
+func tryDialPipe(ctx context.Context, path *string, access uint32) (syscall.Handle, error) {
 	for {
+
 		select {
 		case <-ctx.Done():
 			return syscall.Handle(0), ctx.Err()
 		default:
-			h, err := createFile(*path, syscall.GENERIC_READ|syscall.GENERIC_WRITE, 0, nil, syscall.OPEN_EXISTING, syscall.FILE_FLAG_OVERLAPPED|cSECURITY_SQOS_PRESENT|cSECURITY_ANONYMOUS, 0)
+			h, err := createFile(*path, access, 0, nil, syscall.OPEN_EXISTING, syscall.FILE_FLAG_OVERLAPPED|cSECURITY_SQOS_PRESENT|cSECURITY_ANONYMOUS, 0)
 			if err == nil {
 				return h, nil
 			}
@@ -197,7 +198,7 @@ func tryDialPipe(ctx context.Context, path *string) (syscall.Handle, error) {
 			}
 			// Wait 10 msec and try again. This is a rather simplistic
 			// view, as we always try each 10 milliseconds.
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
@@ -210,7 +211,7 @@ func DialPipe(path string, timeout *time.Duration) (net.Conn, error) {
 	if timeout != nil {
 		absTimeout = time.Now().Add(*timeout)
 	} else {
-		absTimeout = time.Now().Add(time.Second * 2)
+		absTimeout = time.Now().Add(2 * time.Second)
 	}
 	ctx, _ := context.WithDeadline(context.Background(), absTimeout)
 	conn, err := DialPipeContext(ctx, path)
@@ -223,9 +224,15 @@ func DialPipe(path string, timeout *time.Duration) (net.Conn, error) {
 // DialPipeContext attempts to connect to a named pipe by `path` until `ctx`
 // cancellation or timeout.
 func DialPipeContext(ctx context.Context, path string) (net.Conn, error) {
+	return DialPipeAccess(ctx, path, syscall.GENERIC_READ|syscall.GENERIC_WRITE)
+}
+
+// DialPipeAccess attempts to connect to a named pipe by `path` with `access` until `ctx`
+// cancellation or timeout.
+func DialPipeAccess(ctx context.Context, path string, access uint32) (net.Conn, error) {
 	var err error
 	var h syscall.Handle
-	h, err = tryDialPipe(ctx, &path)
+	h, err = tryDialPipe(ctx, &path, access)
 	if err != nil {
 		return nil, err
 	}
@@ -448,6 +455,28 @@ func ListenPipe(path string, c *PipeConfig) (net.Listener, error) {
 	h, err := makeServerPipeHandle(path, sd, c, true)
 	if err != nil {
 		return nil, err
+	}
+	// Create a client handle and connect it.  This results in the pipe
+	// instance always existing, so that clients see ERROR_PIPE_BUSY
+	// rather than ERROR_FILE_NOT_FOUND.  This ties the first instance
+	// up so that no other instances can be used.  This would have been
+	// cleaner if the Win32 API matched CreateFile with ConnectNamedPipe
+	// instead of CreateNamedPipe.  (Apparently created named pipes are
+	// considered to be in listening state regardless of whether any
+	// active calls to ConnectNamedPipe are outstanding.)
+	// On Windows 10: NtCreateNamedPipeFile creates the pipe instance and
+	// client connect fails with ERROR_PIPE_BUSY.
+	// But on Windows 7: NtCreateNamedPipeFile is not creating the pipe
+	// instance and need to create client handle to connect to it.
+	// Ignoring the error from the createFile as it fails on Win10 and
+	// is needed for Win7.
+	h2, err := createFile(path, 0, 0, nil, syscall.OPEN_EXISTING, cSECURITY_SQOS_PRESENT|cSECURITY_ANONYMOUS, 0)
+	if err == nil {
+		// Close the client handle. The server side of the instance will
+		// still be busy, leading to ERROR_PIPE_BUSY instead of
+		// ERROR_NOT_FOUND, as long as we don't close the server handle,
+		// or disconnect the client with DisconnectNamedPipe.
+		syscall.Close(h2)
 	}
 	l := &win32PipeListener{
 		firstHandle: h,

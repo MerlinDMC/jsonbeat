@@ -204,7 +204,15 @@ type Event struct {
 	// URL linking to an external system to continue investigation of this
 	// event.
 	// This URL links to another system where in-depth investigation of the
-	// specific occurence of this event can take place. Alert events, indicated
-	// by `event.kind:alert`, are a common use case for this field.
+	// specific occurrence of this event can take place. Alert events,
+	// indicated by `event.kind:alert`, are a common use case for this field.
 	Url string `ecs:"url"`
+
+	// Reason why this event happened, according to the source.
+	// This describes the why of a particular action or outcome captured in the
+	// event. Where `event.action` captures the action from the event,
+	// `event.reason` describes why that action was taken. For example, a web
+	// proxy with an `event.action` which denied the request may also populate
+	// `event.reason` with the reason why (e.g. `blocked site`).
+	Reason string `ecs:"reason"`
 }
