@@ -61,7 +61,7 @@ github.com/eapache/go-resiliency/breaker
 github.com/eapache/go-xerial-snappy
 # github.com/eapache/queue v1.1.0
 github.com/eapache/queue
-# github.com/elastic/beats/v7 v7.10.0
+# github.com/elastic/beats/v7 v7.10.2
 ## explicit
 github.com/elastic/beats/v7/libbeat/api
 github.com/elastic/beats/v7/libbeat/api/npipe
