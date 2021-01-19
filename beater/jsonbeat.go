@@ -110,6 +110,7 @@ func (bt *Jsonbeat) handleConnection(conn net.Conn) {
 		}
 
 		var timestamp time.Time = time.Now()
+		var eventID string
 
 		if bt.config.TimestampField != "" {
 			if ts, err := data.GetValue(bt.config.TimestampField); err == nil {
@@ -131,6 +132,24 @@ func (bt *Jsonbeat) handleConnection(conn net.Conn) {
 			}
 		}
 
+		if bt.config.IDField != "" {
+			if id, err := data.GetValue(bt.config.IDField); err == nil {
+				if id, ok := id.(int64); ok {
+					eventID = fmt.Sprintf("%d", id)
+				}
+
+				if id, ok := id.(float64); ok {
+					eventID = fmt.Sprintf("%d", int64(id))
+				}
+
+				if id, ok := id.(string); ok {
+					eventID = id
+				}
+
+				data.Delete(bt.config.IDField)
+			}
+		}
+
 		if len(bt.config.Namespace) > 0 {
 			for i := len(bt.config.Namespace) - 1; i >= 0; i-- {
 				data = common.MapStr{
@@ -142,6 +161,10 @@ func (bt *Jsonbeat) handleConnection(conn net.Conn) {
 		event := beat.Event{
 			Timestamp: timestamp,
 			Fields:    data,
+		}
+
+		if eventID != "" {
+			event.SetID(eventID)
 		}
 
 		bt.client.Publish(event)

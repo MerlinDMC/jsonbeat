@@ -13,6 +13,8 @@ type Config struct {
 
 	TimestampField  string `config:"timestamp_field"`
 	TimestampFormat string `config:"timestamp_format"`
+
+	IDField  string `config:"id_field"`
 }
 
 var DefaultConfig = Config{
@@ -21,4 +23,6 @@ var DefaultConfig = Config{
 
 	TimestampField:  "@timestamp",
 	TimestampFormat: time.RFC3339,
+
+	IDField: "",
 }
