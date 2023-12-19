@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	k8s "k8s.io/client-go/kubernetes"
 
 	"github.com/elastic/beats/v7/libbeat/common"
 	"github.com/elastic/beats/v7/libbeat/common/kubernetes"
@@ -29,43 +30,81 @@ import (
 
 // Resource generates metadata for any kubernetes resource
 type Resource struct {
-	config *Config
+	config      *Config
+	clusterInfo ClusterInfo
+	namespace   MetaGen
 }
 
 // NewResourceMetadataGenerator creates a metadata generator for a generic resource
-func NewResourceMetadataGenerator(cfg *common.Config) *Resource {
+func NewResourceMetadataGenerator(cfg *common.Config, client k8s.Interface) *Resource {
 	var config Config
-	config.Unmarshal(cfg)
+	_ = config.Unmarshal(cfg)
 
-	return &Resource{
+	r := &Resource{
 		config: &config,
 	}
+	clusterInfo, err := GetKubernetesClusterIdentifier(cfg, client)
+	if err == nil {
+		r.clusterInfo = clusterInfo
+	}
+	return r
 }
 
-// Generate takes a kind and an object and creates metadata for the same
-func (r *Resource) Generate(kind string, obj kubernetes.Resource, options ...FieldOptions) common.MapStr {
+// NewNamespaceAwareResourceMetadataGenerator creates a metadata generator with informatuon about namespace
+func NewNamespaceAwareResourceMetadataGenerator(cfg *common.Config, client k8s.Interface, namespace MetaGen) *Resource {
+	r := NewResourceMetadataGenerator(cfg, client)
+	r.namespace = namespace
+	return r
+}
+
+// Generate generates metadata from a resource object
+// Generate method returns metadata in the following form:
+//
+//	{
+//		  "kubernetes": {},
+//	   "ecs.a.field": 42,
+//	}
+//
+// This method should be called in top level and not as part of other metadata generators.
+// For retrieving metadata without kubernetes. prefix one should call GenerateK8s instead.
+func (r *Resource) Generate(kind string, obj kubernetes.Resource, opts ...FieldOptions) common.MapStr {
+	ecsFields := r.GenerateECS(obj)
+	meta := common.MapStr{
+		"kubernetes": r.GenerateK8s(kind, obj, opts...),
+	}
+	meta.DeepUpdate(ecsFields)
+	return meta
+}
+
+// GenerateECS generates ECS metadata from a resource object
+func (r *Resource) GenerateECS(obj kubernetes.Resource) common.MapStr {
+	ecsMeta := common.MapStr{}
+	if r.clusterInfo.Url != "" {
+		_, _ = ecsMeta.Put("orchestrator.cluster.url", r.clusterInfo.Url)
+	}
+	if r.clusterInfo.Name != "" {
+		_, _ = ecsMeta.Put("orchestrator.cluster.name", r.clusterInfo.Name)
+	}
+	return ecsMeta
+}
+
+// GenerateK8s takes a kind and an object and creates metadata for the same
+func (r *Resource) GenerateK8s(kind string, obj kubernetes.Resource, options ...FieldOptions) common.MapStr {
 	accessor, err := meta.Accessor(obj)
 	if err != nil {
 		return nil
 	}
 
-	labelMap := common.MapStr{}
+	var labelMap common.MapStr
 	if len(r.config.IncludeLabels) == 0 {
-		for k, v := range accessor.GetLabels() {
-			if r.config.LabelsDedot {
-				label := common.DeDot(k)
-				labelMap.Put(label, v)
-			} else {
-				safemapstr.Put(labelMap, k, v)
-			}
-		}
+		labelMap = GenerateMap(accessor.GetLabels(), r.config.LabelsDedot)
 	} else {
 		labelMap = generateMapSubset(accessor.GetLabels(), r.config.IncludeLabels, r.config.LabelsDedot)
 	}
 
 	// Exclude any labels that are present in the exclude_labels config
 	for _, label := range r.config.ExcludeLabels {
-		labelMap.Delete(label)
+		_ = labelMap.Delete(label)
 	}
 
 	annotationsMap := generateMapSubset(accessor.GetAnnotations(), r.config.IncludeAnnotations, r.config.AnnotationsDedot)
@@ -77,9 +116,21 @@ func (r *Resource) Generate(kind string, obj kubernetes.Resource, options ...Fie
 		},
 	}
 
+	namespaceName := accessor.GetNamespace()
+	if namespaceName != "" {
+		_ = safemapstr.Put(meta, "namespace", namespaceName)
+
+		if r.namespace != nil {
+			nsMeta := r.namespace.GenerateFromName(namespaceName)
+			if nsMeta != nil {
+				meta.DeepUpdate(nsMeta)
+			}
+		}
+	}
+
 	if accessor.GetNamespace() != "" {
 		// TODO make this namespace.name in 8.0
-		safemapstr.Put(meta, "namespace", accessor.GetNamespace())
+		_ = safemapstr.Put(meta, "namespace", accessor.GetNamespace())
 	}
 
 	// Add controller metadata if present
@@ -90,19 +141,21 @@ func (r *Resource) Generate(kind string, obj kubernetes.Resource, options ...Fie
 				// TODO grow this list as we keep adding more `state_*` metricsets
 				case "Deployment",
 					"ReplicaSet",
-					"StatefulSet":
-					safemapstr.Put(meta, strings.ToLower(ref.Kind)+".name", ref.Name)
+					"StatefulSet",
+					"DaemonSet",
+					"Job":
+					_ = safemapstr.Put(meta, strings.ToLower(ref.Kind)+".name", ref.Name)
 				}
 			}
 		}
 	}
 
 	if len(labelMap) != 0 {
-		safemapstr.Put(meta, "labels", labelMap)
+		_ = safemapstr.Put(meta, "labels", labelMap)
 	}
 
 	if len(annotationsMap) != 0 {
-		safemapstr.Put(meta, "annotations", annotationsMap)
+		_ = safemapstr.Put(meta, "annotations", annotationsMap)
 	}
 
 	for _, option := range options {
@@ -123,10 +176,28 @@ func generateMapSubset(input map[string]string, keys []string, dedot bool) commo
 		if ok {
 			if dedot {
 				dedotKey := common.DeDot(key)
-				output.Put(dedotKey, value)
+				_, _ = output.Put(dedotKey, value)
 			} else {
-				safemapstr.Put(output, key, value)
+				_ = safemapstr.Put(output, key, value)
 			}
+		}
+	}
+
+	return output
+}
+
+func GenerateMap(input map[string]string, dedot bool) common.MapStr {
+	output := common.MapStr{}
+	if input == nil {
+		return output
+	}
+
+	for k, v := range input {
+		if dedot {
+			label := common.DeDot(k)
+			_, _ = output.Put(label, v)
+		} else {
+			_ = safemapstr.Put(output, k, v)
 		}
 	}
 

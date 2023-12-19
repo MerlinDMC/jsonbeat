@@ -82,6 +82,7 @@ type Mem struct {
 	Total      uint64
 	Used       uint64
 	Free       uint64
+	Cached     uint64
 	ActualFree uint64
 	ActualUsed uint64
 }

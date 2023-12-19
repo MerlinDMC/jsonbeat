@@ -68,6 +68,8 @@ type kafkaConfig struct {
 	Username           string                    `config:"username"`
 	Password           string                    `config:"password"`
 	Codec              codec.Config              `config:"codec"`
+	Sasl               kafka.SaslConfig          `config:"sasl"`
+	EnableFAST         bool                      `config:"enable_krb5_fast"`
 }
 
 type metaConfig struct {
@@ -89,6 +91,12 @@ var compressionModes = map[string]sarama.CompressionCodec{
 	"lz4":    sarama.CompressionLZ4,
 	"snappy": sarama.CompressionSnappy,
 }
+
+const (
+	saslTypePlaintext   = sarama.SASLTypePlaintext
+	saslTypeSCRAMSHA256 = sarama.SASLTypeSCRAMSHA256
+	saslTypeSCRAMSHA512 = sarama.SASLTypeSCRAMSHA512
+)
 
 func defaultConfig() kafkaConfig {
 	return kafkaConfig{
@@ -156,7 +164,6 @@ func (c *kafkaConfig) Validate() error {
 			return fmt.Errorf("compression_level must be between 0 and 9")
 		}
 	}
-
 	return nil
 }
 
@@ -181,13 +188,22 @@ func newSaramaConfig(log *logp.Logger, config *kafkaConfig) (*sarama.Config, err
 	if err != nil {
 		return nil, err
 	}
+
 	if tls != nil {
 		k.Net.TLS.Enable = true
-		k.Net.TLS.Config = tls.BuildModuleConfig("")
+		k.Net.TLS.Config = tls.BuildModuleClientConfig("")
 	}
 
-	if config.Kerberos.IsEnabled() {
+	switch {
+	case config.Kerberos.IsEnabled():
 		cfgwarn.Beta("Kerberos authentication for Kafka is beta.")
+
+		// Due to a regrettable past decision, the flag controlling Kerberos
+		// FAST authentication was initially added to the output configuration
+		// rather than the shared Kerberos configuration. To avoid a breaking
+		// change, we still check for the old flag, but it is deprecated and
+		// should be removed in a future version.
+		enableFAST := config.Kerberos.EnableFAST || config.EnableFAST
 
 		k.Net.SASL.Enable = true
 		k.Net.SASL.Mechanism = sarama.SASLTypeGSSAPI
@@ -199,13 +215,14 @@ func newSaramaConfig(log *logp.Logger, config *kafkaConfig) (*sarama.Config, err
 			Username:           config.Kerberos.Username,
 			Password:           config.Kerberos.Password,
 			Realm:              config.Kerberos.Realm,
+			DisablePAFXFAST:    !enableFAST,
 		}
-	}
 
-	if config.Username != "" {
+	case config.Username != "":
 		k.Net.SASL.Enable = true
 		k.Net.SASL.User = config.Username
 		k.Net.SASL.Password = config.Password
+		config.Sasl.ConfigureSarama(k)
 	}
 
 	// configure metadata update properties

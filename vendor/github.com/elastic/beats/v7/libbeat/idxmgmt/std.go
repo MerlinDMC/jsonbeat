@@ -249,7 +249,6 @@ func (m *indexManager) VerifySetup(loadTemplate, loadILM LoadMode) (bool, string
 	return warn == "", warn
 }
 
-//
 func (m *indexManager) Setup(loadTemplate, loadILM LoadMode) error {
 	log := m.support.log
 
@@ -271,7 +270,6 @@ func (m *indexManager) Setup(loadTemplate, loadILM LoadMode) error {
 		if err != nil {
 			return err
 		}
-		log.Info("ILM policy successfully loaded.")
 
 		// The template should be updated if a new policy is created.
 		if policyCreated && templateComponent.enabled {
@@ -299,14 +297,9 @@ func (m *indexManager) Setup(loadTemplate, loadILM LoadMode) error {
 	}
 
 	if ilmComponent.load {
-		// ensure alias is created after the template is created
-		if err := m.ilm.EnsureAlias(); err != nil {
-			if ilm.ErrReason(err) != ilm.ErrAliasAlreadyExists {
-				return err
-			}
-			log.Info("Write alias exists already")
-		} else {
-			log.Info("Write alias successfully generated.")
+		err := m.ilm.EnsureAlias()
+		if err != nil {
+			return err
 		}
 	}
 
@@ -377,11 +370,7 @@ func getEventCustomIndex(evt *beat.Event, beatInfo beat.Info) string {
 }
 
 func unpackTemplateConfig(cfg *common.Config) (config template.TemplateConfig, err error) {
-	config = template.DefaultConfig()
-	if cfg != nil {
-		err = cfg.Unpack(&config)
-	}
-	return config, err
+	return template.Unpack(cfg)
 }
 
 func applyILMSettings(

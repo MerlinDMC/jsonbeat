@@ -64,6 +64,10 @@ type Autodiscover struct {
 	meta            *meta.Map
 	listener        bus.Listener
 	logger          *logp.Logger
+
+	// workDone is a channel used for testing purpouses, to know when the worker has
+	// done some work.
+	workDone chan struct{}
 }
 
 // NewAutodiscover instantiates and returns a new Autodiscover manager
@@ -165,13 +169,16 @@ func (a *Autodiscover) worker() {
 			// reset updated status
 			updated = false
 		}
+
+		// For testing purpouses.
+		if a.workDone != nil {
+			a.workDone <- struct{}{}
+		}
 	}
 }
 
 func (a *Autodiscover) handleStart(event bus.Event) bool {
-	var updated bool
-
-	a.logger.Debugf("Got a start event: %v", event)
+	a.logger.Debugw("Got a start event.", "autodiscover.event", event)
 
 	eventID := getID(event)
 	if eventID == "" {
@@ -181,7 +188,7 @@ func (a *Autodiscover) handleStart(event bus.Event) bool {
 
 	// Ensure configs list exists for this instance
 	if _, ok := a.configs[eventID]; !ok {
-		a.configs[eventID] = map[uint64]*reload.ConfigWithMeta{}
+		a.configs[eventID] = make(map[uint64]*reload.ConfigWithMeta)
 	}
 
 	configs, err := a.configurer.CreateConfig(event)
@@ -196,11 +203,30 @@ func (a *Autodiscover) handleStart(event bus.Event) bool {
 		}
 	}
 
+	var (
+		updated bool
+		newCfg  = make(map[uint64]*reload.ConfigWithMeta)
+	)
+
 	meta := a.getMeta(event)
 	for _, config := range configs {
 		hash, err := cfgfile.HashConfig(config)
 		if err != nil {
 			a.logger.Debugf("Could not hash config %v: %v", common.DebugString(config, true), err)
+			continue
+		}
+
+		// Update meta no matter what
+		dynFields := a.meta.Store(hash, meta)
+
+		if _, ok := newCfg[hash]; ok {
+			a.logger.Debugf("Config %v duplicated in start event", common.DebugString(config, true))
+			continue
+		}
+
+		if cfg, ok := a.configs[eventID][hash]; ok {
+			a.logger.Debugf("Config %v is already running", common.DebugString(config, true))
+			newCfg[hash] = cfg
 			continue
 		}
 
@@ -211,20 +237,24 @@ func (a *Autodiscover) handleStart(event bus.Event) bool {
 				common.DebugString(config, true))))
 			continue
 		}
-
-		// Update meta no matter what
-		dynFields := a.meta.Store(hash, meta)
-
-		if a.configs[eventID][hash] != nil {
-			a.logger.Debugf("Config %v is already running", common.DebugString(config, true))
-			continue
-		}
-
-		a.configs[eventID][hash] = &reload.ConfigWithMeta{
+		newCfg[hash] = &reload.ConfigWithMeta{
 			Config: config,
 			Meta:   &dynFields,
 		}
+
 		updated = true
+	}
+
+	// If the new add event has lesser configs than the previous stable configuration then it means that there were
+	// configs that were removed in something like a resync event.
+	if len(newCfg) < len(a.configs[eventID]) {
+		updated = true
+	}
+
+	// By replacing the config's for eventID we make sure that all old configs that are no longer in use
+	// are stopped correctly. This will ensure that a resync event is handled correctly.
+	if updated {
+		a.configs[eventID] = newCfg
 	}
 
 	return updated

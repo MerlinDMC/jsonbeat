@@ -26,11 +26,13 @@ import (
 	"github.com/elastic/beats/v7/libbeat/common/reload"
 	"github.com/elastic/beats/v7/libbeat/feature"
 	"github.com/elastic/beats/v7/libbeat/logp"
+	"github.com/elastic/elastic-agent-client/v7/pkg/client"
 )
 
 // Status describes the current status of the beat.
 type Status int
 
+//go:generate stringer -type=Status
 const (
 	// Unknown is initial status when none has been reported.
 	Unknown Status = iota
@@ -72,15 +74,39 @@ type Manager interface {
 	// Enabled returns true if manager is enabled.
 	Enabled() bool
 
-	// Start the config manager giving it a stopFunc callback
-	// so the beat can be told when to stop.
-	Start(stopFunc func())
+	// Start needs to invoked when the system is ready to receive an external configuration and
+	// also ready to start ingesting new events. The manager expects that all the reloadable and
+	// reloadable list are fixed for the whole lifetime of the manager.
+	//
+	// Notes: Adding dynamically new reloadable hooks at runtime can lead to inconsistency in the
+	// execution.
+	Start() error
 
-	// Stop the config manager.
+	// Stop when this method is called, the manager will stop receiving new actions, no more action
+	// will be propagated to the handlers and will not try to configure any reloadable parts.
+	// When the manager is stop the callback will be called to signal that the system can terminate.
+	//
+	// Calls to 'CheckRawConfig()' or 'SetPayload()' will be ignored after calling stop.
+	//
+	// Note: Stop will not call 'UnregisterAction()' automaticallty.
 	Stop()
+
+	// SetStopCallback accepts a function that need to be called when the manager want to shutdown the
+	// beats. This is needed when you want your beats to be gracefully shutdown remotely by the Elastic Agent
+	// when a policy doesn't need to run this beat.
+	SetStopCallback(f func())
 
 	// CheckRawConfig check settings are correct before launching the beat.
 	CheckRawConfig(cfg *common.Config) error
+
+	// RegisterAction registers action handler with the client
+	RegisterAction(action client.Action)
+
+	// UnregisterAction unregisters action handler with the client
+	UnregisterAction(action client.Action)
+
+	// SetPayload Allows to add additional metadata to future requests made by the manager.
+	SetPayload(map[string]interface{})
 }
 
 // PluginFunc for creating FactoryFunc if it matches a config
@@ -126,10 +152,11 @@ func defaultModeConfig() *modeConfig {
 
 // nilManager, fallback when no manager is present
 type nilManager struct {
-	logger *logp.Logger
-	lock   sync.Mutex
-	status Status
-	msg    string
+	logger   *logp.Logger
+	lock     sync.Mutex
+	status   Status
+	msg      string
+	stopFunc func()
 }
 
 func nilFactory(*common.Config, *reload.Registry, uuid.UUID) (Manager, error) {
@@ -141,8 +168,9 @@ func nilFactory(*common.Config, *reload.Registry, uuid.UUID) (Manager, error) {
 	}, nil
 }
 
+func (*nilManager) SetStopCallback(func())                  {}
 func (*nilManager) Enabled() bool                           { return false }
-func (*nilManager) Start(_ func())                          {}
+func (*nilManager) Start() error                            { return nil }
 func (*nilManager) Stop()                                   {}
 func (*nilManager) CheckRawConfig(cfg *common.Config) error { return nil }
 func (n *nilManager) UpdateStatus(status Status, msg string) {
@@ -154,3 +182,9 @@ func (n *nilManager) UpdateStatus(status Status, msg string) {
 		n.logger.Infof("Status change to %s: %s", status, msg)
 	}
 }
+
+func (n *nilManager) RegisterAction(action client.Action) {}
+
+func (n *nilManager) UnregisterAction(action client.Action) {}
+
+func (n *nilManager) SetPayload(map[string]interface{}) {}

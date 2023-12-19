@@ -3,22 +3,28 @@
 package gosigar
 
 import (
-	"unsafe"
+	"bytes"
 )
 
-// TODO (2020-07-14): Fix the unsafe pointer conversion. https://github.com/elastic/gosigar/issues/138
-//go:nocheckptr
-func bytePtrToString(ptr *int8) string {
-	bytes := (*[10000]byte)(unsafe.Pointer(ptr))
+// byteListToString converts the raw byte arrays we get into a string. This is a bit of a process, as byte strings are normally []uint8
+func byteListToString(raw []int8) string {
+	byteList := make([]byte, len(raw))
 
-	n := 0
-	for bytes[n] != 0 {
-		n++
+	for pos, singleByte := range raw {
+		byteList[pos] = byte(singleByte)
+		if singleByte == 0 {
+			break
+		}
 	}
 
-	return string(bytes[0:n])
+	return string(bytes.Trim(byteList, "\x00"))
 }
 
 func chop(buf []byte) []byte {
 	return buf[0 : len(buf)-1]
+}
+
+// convertBytesToString trims null bytes and returns a string
+func convertBytesToString(arr []byte) string {
+	return string(bytes.Trim(arr, "\x00"))
 }

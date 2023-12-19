@@ -61,7 +61,7 @@ func genSetupCmd(settings instance.Settings, beatCreator beat.Creator) *cobra.Co
  * ILM policy (for Elasticsearch 6.5 and newer).
 `,
 		Run: func(cmd *cobra.Command, args []string) {
-			beat, err := instance.NewBeat(settings.Name, settings.IndexPrefix, settings.Version)
+			beat, err := instance.NewBeat(settings.Name, settings.IndexPrefix, settings.Version, settings.ElasticLicensed)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error initializing beat: %s\n", err)
 				os.Exit(1)
@@ -94,7 +94,7 @@ func genSetupCmd(settings instance.Settings, beatCreator beat.Creator) *cobra.Co
 			}
 
 			//create the struct to pass on
-			var s = instance.SetupSettings{}
+			var s = instance.SetupSettings{SetupAll: setupAll}
 			for k, v := range registeredFlags {
 				if setupAll || v {
 					switch k {
