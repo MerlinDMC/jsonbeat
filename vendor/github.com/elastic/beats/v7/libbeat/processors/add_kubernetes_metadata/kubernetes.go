@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+//go:build linux || darwin || windows
 // +build linux darwin windows
 
 package add_kubernetes_metadata
@@ -88,6 +89,14 @@ func isKubernetesAvailableWithRetry(client k8sclient.Interface) bool {
 	}
 }
 
+// kubernetesMetadataExist checks whether an event is already enriched with kubernetes metadata
+func kubernetesMetadataExist(event *beat.Event) bool {
+	if _, err := event.GetValue("kubernetes"); err != nil {
+		return false
+	}
+	return true
+}
+
 // New constructs a new add_kubernetes_metadata processor.
 func New(cfg *common.Config) (processors.Processor, error) {
 	config, err := newProcessorConfig(cfg, Indexing)
@@ -114,7 +123,7 @@ func newProcessorConfig(cfg *common.Config, register *Register) (kubeAnnotatorCo
 
 	err := cfg.Unpack(&config)
 	if err != nil {
-		return config, fmt.Errorf("fail to unpack the kubernetes configuration: %s", err)
+		return config, fmt.Errorf("fail to unpack the kubernetes configuration: %w", err)
 	}
 
 	//Load and append default indexer configs
@@ -156,10 +165,20 @@ func (k *kubernetesAnnotator) init(config kubeAnnotatorConfig, cfg *common.Confi
 		}
 
 		k.matchers = matchers
-
-		config.Host = kubernetes.DiscoverKubernetesNode(k.log, config.Host, kubernetes.IsInCluster(config.KubeConfig), client)
-
-		k.log.Debugf("Initializing a new Kubernetes watcher using host: %s", config.Host)
+		nd := &kubernetes.DiscoverKubernetesNodeParams{
+			ConfigHost:  config.Host,
+			Client:      client,
+			IsInCluster: kubernetes.IsInCluster(config.KubeConfig),
+			HostUtils:   &kubernetes.DefaultDiscoveryUtils{},
+		}
+		if config.Scope == "node" {
+			config.Host, err = kubernetes.DiscoverKubernetesNode(k.log, nd)
+			if err != nil {
+				k.log.Errorf("Couldn't discover Kubernetes node: %w", err)
+				return
+			}
+			k.log.Debugf("Initializing a new Kubernetes watcher using host: %s", config.Host)
+		}
 
 		watcher, err := kubernetes.NewWatcher(client, &kubernetes.Pod{}, kubernetes.WatchOptions{
 			SyncTimeout: config.SyncPeriod,
@@ -171,7 +190,28 @@ func (k *kubernetesAnnotator) init(config kubeAnnotatorConfig, cfg *common.Confi
 			return
 		}
 
-		metaGen := metadata.NewPodMetadataGenerator(cfg, watcher.Store(), nil, nil)
+		metaConf := config.AddResourceMetadata
+
+		options := kubernetes.WatchOptions{
+			SyncTimeout: config.SyncPeriod,
+			Node:        config.Host,
+		}
+		if config.Namespace != "" {
+			options.Namespace = config.Namespace
+		}
+		nodeWatcher, err := kubernetes.NewWatcher(client, &kubernetes.Node{}, options, nil)
+		if err != nil {
+			k.log.Errorf("couldn't create watcher for %T due to error %+v", &kubernetes.Node{}, err)
+		}
+		namespaceWatcher, err := kubernetes.NewWatcher(client, &kubernetes.Namespace{}, kubernetes.WatchOptions{
+			SyncTimeout: config.SyncPeriod,
+		}, nil)
+		if err != nil {
+			k.log.Errorf("couldn't create watcher for %T due to error %+v", &kubernetes.Namespace{}, err)
+		}
+		// TODO: refactor the above section to a common function to be used by NeWPodEventer too
+		metaGen := metadata.GetPodMetaGen(cfg, watcher, nodeWatcher, namespaceWatcher, metaConf)
+
 		k.indexers = NewIndexers(config.Indexers, metaGen)
 		k.watcher = watcher
 		k.kubernetesAvailable = true
@@ -194,8 +234,22 @@ func (k *kubernetesAnnotator) init(config kubeAnnotatorConfig, cfg *common.Confi
 			},
 		})
 
+		// NOTE: order is important here since pod meta will include node meta and hence node.Store() should
+		// be populated before trying to generate metadata for Pods.
+		if nodeWatcher != nil {
+			if err := nodeWatcher.Start(); err != nil {
+				k.log.Debugf("add_kubernetes_metadata", "Couldn't start node watcher: %v", err)
+				return
+			}
+		}
+		if namespaceWatcher != nil {
+			if err := namespaceWatcher.Start(); err != nil {
+				k.log.Debugf("add_kubernetes_metadata", "Couldn't start namespace watcher: %v", err)
+				return
+			}
+		}
 		if err := watcher.Start(); err != nil {
-			k.log.Debugf("add_kubernetes_metadata", "Couldn't start watcher: %v", err)
+			k.log.Debugf("add_kubernetes_metadata", "Couldn't start pod watcher: %v", err)
 			return
 		}
 	})
@@ -203,6 +257,10 @@ func (k *kubernetesAnnotator) init(config kubeAnnotatorConfig, cfg *common.Confi
 
 func (k *kubernetesAnnotator) Run(event *beat.Event) (*beat.Event, error) {
 	if !k.kubernetesAvailable {
+		return event, nil
+	}
+	if kubernetesMetadataExist(event) {
+		k.log.Debug("Skipping add_kubernetes_metadata processor as kubernetes metadata already exist")
 		return event, nil
 	}
 	index := k.matchers.MetadataIndex(event.Fields)
@@ -219,13 +277,13 @@ func (k *kubernetesAnnotator) Run(event *beat.Event) (*beat.Event, error) {
 	}
 
 	metaClone := metadata.Clone()
-	metaClone.Delete("container.name")
-	containerImage, err := metadata.GetValue("container.image")
+	_ = metaClone.Delete("kubernetes.container.name")
+	containerImage, err := metadata.GetValue("kubernetes.container.image")
 	if err == nil {
-		metaClone.Delete("container.image")
-		metaClone.Put("container.image.name", containerImage)
+		_ = metaClone.Delete("kubernetes.container.image")
+		_, _ = metaClone.Put("kubernetes.container.image.name", containerImage)
 	}
-	cmeta, err := metaClone.Clone().GetValue("container")
+	cmeta, err := metaClone.Clone().GetValue("kubernetes.container")
 	if err == nil {
 		event.Fields.DeepUpdate(common.MapStr{
 			"container": cmeta,
@@ -233,11 +291,11 @@ func (k *kubernetesAnnotator) Run(event *beat.Event) (*beat.Event, error) {
 	}
 
 	kubeMeta := metadata.Clone()
-	kubeMeta.Delete("container.id")
-	kubeMeta.Delete("container.runtime")
-	event.Fields.DeepUpdate(common.MapStr{
-		"kubernetes": kubeMeta,
-	})
+	// remove container meta from kubernetes.container.*
+	_ = kubeMeta.Delete("kubernetes.container.id")
+	_ = kubeMeta.Delete("kubernetes.container.runtime")
+	_ = kubeMeta.Delete("kubernetes.container.image")
+	event.Fields.DeepUpdate(kubeMeta)
 
 	return event, nil
 }

@@ -28,20 +28,26 @@ import (
 	"math"
 	"math/big"
 	"math/rand"
+	"net"
 	"os"
+	"os/user"
 	"runtime"
+	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
-	errw "github.com/pkg/errors"
 	"go.uber.org/zap"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"github.com/elastic/beats/v7/libbeat/api"
 	"github.com/elastic/beats/v7/libbeat/asset"
 	"github.com/elastic/beats/v7/libbeat/beat"
 	"github.com/elastic/beats/v7/libbeat/cfgfile"
 	"github.com/elastic/beats/v7/libbeat/cloudid"
+	"github.com/elastic/beats/v7/libbeat/cmd/instance/metrics"
 	"github.com/elastic/beats/v7/libbeat/common"
 	"github.com/elastic/beats/v7/libbeat/common/cfgwarn"
 	"github.com/elastic/beats/v7/libbeat/common/file"
@@ -83,6 +89,8 @@ type Beat struct {
 
 	keystore   keystore.Keystore
 	processing processing.Supporter
+
+	InputQueueSize int // Size of the producer queue used by most queues.
 }
 
 type beatConfig struct {
@@ -91,12 +99,15 @@ type beatConfig struct {
 	// instance internal configs
 
 	// beat top-level settings
-	Name     string         `config:"name"`
-	MaxProcs int            `config:"max_procs"`
-	Seccomp  *common.Config `config:"seccomp"`
+	Name      string `config:"name"`
+	MaxProcs  int    `config:"max_procs"`
+	GCPercent int    `config:"gc_percent"`
+
+	Seccomp *common.Config `config:"seccomp"`
 
 	// beat internal components configurations
 	HTTP            *common.Config         `config:"http"`
+	HTTPPprof       *common.Config         `config:"http.pprof"`
 	Path            paths.Path             `config:"path"`
 	Logging         *common.Config         `config:"logging"`
 	MetricLogging   *common.Config         `config:"logging.metrics"`
@@ -150,49 +161,28 @@ func initRand() {
 // XXX Move this as a *Beat method?
 func Run(settings Settings, bt beat.Creator) error {
 	err := setUmaskWithSettings(settings)
-	if err != nil && err != errNotImplemented {
-		return errw.Wrap(err, "could not set umask")
+	if err != nil && !errors.Is(err, errNotImplemented) {
+		return fmt.Errorf("could not set umask: %w", err)
 	}
-
-	name := settings.Name
-	idxPrefix := settings.IndexPrefix
-	version := settings.Version
 
 	return handleError(func() error {
 		defer func() {
 			if r := recover(); r != nil {
-				logp.NewLogger(name).Fatalw("Failed due to panic.",
+				logp.NewLogger(settings.Name).Fatalw("Failed due to panic.",
 					"panic", r, zap.Stack("stack"))
 			}
 		}()
-		b, err := NewBeat(name, idxPrefix, version)
+		b, err := NewInitializedBeat(settings)
 		if err != nil {
 			return err
 		}
-
-		// Add basic info
-		registry := monitoring.GetNamespace("info").GetRegistry()
-		monitoring.NewString(registry, "version").Set(b.Info.Version)
-		monitoring.NewString(registry, "beat").Set(b.Info.Beat)
-		monitoring.NewString(registry, "name").Set(b.Info.Name)
-		monitoring.NewString(registry, "hostname").Set(b.Info.Hostname)
-
-		// Add additional info to state registry. This is also reported to monitoring
-		stateRegistry := monitoring.GetNamespace("state").GetRegistry()
-		serviceRegistry := stateRegistry.NewRegistry("service")
-		monitoring.NewString(serviceRegistry, "version").Set(b.Info.Version)
-		monitoring.NewString(serviceRegistry, "name").Set(b.Info.Beat)
-		beatRegistry := stateRegistry.NewRegistry("beat")
-		monitoring.NewString(beatRegistry, "name").Set(b.Info.Name)
-		monitoring.NewFunc(stateRegistry, "host", host.ReportInfo, monitoring.Report)
-
 		return b.launch(settings, bt)
 	}())
 }
 
 // NewInitializedBeat creates a new beat where all information and initialization is derived from settings
 func NewInitializedBeat(settings Settings) (*Beat, error) {
-	b, err := NewBeat(settings.Name, settings.IndexPrefix, settings.Version)
+	b, err := NewBeat(settings.Name, settings.IndexPrefix, settings.Version, settings.ElasticLicensed)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +193,7 @@ func NewInitializedBeat(settings Settings) (*Beat, error) {
 }
 
 // NewBeat creates a new beat instance
-func NewBeat(name, indexPrefix, v string) (*Beat, error) {
+func NewBeat(name, indexPrefix, v string, elasticLicensed bool) (*Beat, error) {
 	if v == "" {
 		v = version.GetDefaultVersion()
 	}
@@ -228,13 +218,16 @@ func NewBeat(name, indexPrefix, v string) (*Beat, error) {
 
 	b := beat.Beat{
 		Info: beat.Info{
-			Beat:        name,
-			IndexPrefix: indexPrefix,
-			Version:     v,
-			Name:        hostname,
-			Hostname:    hostname,
-			ID:          id,
-			EphemeralID: ephemeralID,
+			Beat:            name,
+			ElasticLicensed: elasticLicensed,
+			IndexPrefix:     indexPrefix,
+			Version:         v,
+			Name:            hostname,
+			Hostname:        hostname,
+			ID:              id,
+			FirstStart:      time.Now(),
+			StartTime:       time.Now(),
+			EphemeralID:     metrics.EphemeralID(),
 		},
 		Fields: fields,
 	}
@@ -313,7 +306,7 @@ func (b *Beat) createBeater(bt beat.Creator) (beat.Beater, error) {
 		reg = monitoring.Default.NewRegistry("libbeat")
 	}
 
-	err = setupMetrics(b.Info.Beat)
+	err = metrics.SetupMetrics(b.Info.Beat)
 	if err != nil {
 		return nil, err
 	}
@@ -333,29 +326,37 @@ func (b *Beat) createBeater(bt beat.Creator) (beat.Beater, error) {
 			return nil, errors.New(msg)
 		}
 	}
-	pipeline, err := pipeline.Load(b.Info,
-		pipeline.Monitors{
-			Metrics:   reg,
-			Telemetry: monitoring.GetNamespace("state").GetRegistry(),
-			Logger:    logp.L().Named("publisher"),
-			Tracer:    b.Instrumentation.Tracer(),
-		},
-		b.Config.Pipeline,
-		b.processing,
-		b.makeOutputFactory(b.Config.Output),
-	)
 
+	var publisher *pipeline.Pipeline
+	monitors := pipeline.Monitors{
+		Metrics:   reg,
+		Telemetry: monitoring.GetNamespace("state").GetRegistry(),
+		Logger:    logp.L().Named("publisher"),
+		Tracer:    b.Instrumentation.Tracer(),
+	}
+	outputFactory := b.makeOutputFactory(b.Config.Output)
+	settings := pipeline.Settings{
+		WaitClose:      0,
+		WaitCloseMode:  pipeline.NoWaitOnClose,
+		Processors:     b.processing,
+		InputQueueSize: b.InputQueueSize,
+	}
+	if settings.InputQueueSize > 0 {
+		publisher, err = pipeline.LoadWithSettings(b.Info, monitors, b.Config.Pipeline, outputFactory, settings)
+	} else {
+		publisher, err = pipeline.Load(b.Info, monitors, b.Config.Pipeline, b.processing, outputFactory)
+	}
 	if err != nil {
-		return nil, fmt.Errorf("error initializing publisher: %+v", err)
+		return nil, fmt.Errorf("error initializing publisher: %w", err)
 	}
 
-	reload.Register.MustRegister("output", b.makeOutputReloader(pipeline.OutputReloader()))
+	reload.Register.MustRegister("output", b.makeOutputReloader(publisher.OutputReloader()))
 
 	// TODO: some beats race on shutdown with publisher.Stop -> do not call Stop yet,
 	//       but refine publisher to disconnect clients on stop automatically
 	// defer pipeline.Close()
 
-	b.Publisher = pipeline
+	b.Publisher = publisher
 	beater, err := bt(&b.Beat, sub)
 	if err != nil {
 		return nil, err
@@ -365,13 +366,11 @@ func (b *Beat) createBeater(bt beat.Creator) (beat.Beater, error) {
 }
 
 func (b *Beat) launch(settings Settings, bt beat.Creator) error {
-	defer logp.Sync()
+	defer func() {
+		_ = logp.Sync()
+	}()
 	defer logp.Info("%s stopped.", b.Info.Beat)
 
-	err := b.InitWithSettings(settings)
-	if err != nil {
-		return err
-	}
 	defer func() {
 		if err := b.processing.Close(); err != nil {
 			logp.Warn("Failed to close global processing: %v", err)
@@ -387,21 +386,19 @@ func (b *Beat) launch(settings Settings, bt beat.Creator) error {
 	// Try to acquire exclusive lock on data path to prevent another beat instance
 	// sharing same data path.
 	bl := newLocker(b)
-	err = bl.lock()
+	err := bl.lock()
 	if err != nil {
 		return err
 	}
-	defer bl.unlock()
 
-	// Set Beat ID in registry vars, in case it was loaded from meta file
-	infoRegistry := monitoring.GetNamespace("info").GetRegistry()
-	monitoring.NewString(infoRegistry, "uuid").Set(b.Info.ID.String())
-
-	serviceRegistry := monitoring.GetNamespace("state").GetRegistry().GetRegistry("service")
-	monitoring.NewString(serviceRegistry, "id").Set(b.Info.ID.String())
+	defer func() {
+		_ = bl.unlock()
+	}()
 
 	svc.BeforeRun()
 	defer svc.Cleanup()
+
+	b.registerMetrics()
 
 	// Start the API Server before the Seccomp lock down, we do this so we can create the unix socket
 	// set the appropriate permission on the unix domain file without having to whitelist anything
@@ -409,10 +406,15 @@ func (b *Beat) launch(settings Settings, bt beat.Creator) error {
 	if b.Config.HTTP.Enabled() {
 		s, err := api.NewWithDefaultRoutes(logp.NewLogger(""), b.Config.HTTP, monitoring.GetNamespace)
 		if err != nil {
-			return errw.Wrap(err, "could not start the HTTP server for the API")
+			return fmt.Errorf("could not start the HTTP server for the API: %w", err)
 		}
 		s.Start()
-		defer s.Stop()
+		defer func() {
+			_ = s.Stop()
+		}()
+		if b.Config.HTTPPprof.Enabled() {
+			s.AttachPprof()
+		}
 	}
 
 	if err = seccomp.LoadFilter(b.Config.Seccomp); err != nil {
@@ -454,11 +456,57 @@ func (b *Beat) launch(settings Settings, bt beat.Creator) error {
 
 	logp.Info("%s start running.", b.Info.Beat)
 
-	// Launch config manager
-	b.Manager.Start(beater.Stop)
-	defer b.Manager.Stop()
+	// Allow the manager to stop a currently running beats out of bound.
+	b.Manager.SetStopCallback(beater.Stop)
 
 	return beater.Run(&b.Beat)
+}
+
+// registerMetrics registers metrics with the internal monitoring API. This data
+// is then exposed through the HTTP monitoring endpoint (e.g. /info and /state)
+// and/or pushed to Elasticsearch through the x-pack monitoring feature.
+func (b *Beat) registerMetrics() {
+	// info
+	infoRegistry := monitoring.GetNamespace("info").GetRegistry()
+	monitoring.NewString(infoRegistry, "version").Set(b.Info.Version)
+	monitoring.NewString(infoRegistry, "beat").Set(b.Info.Beat)
+	monitoring.NewString(infoRegistry, "name").Set(b.Info.Name)
+	monitoring.NewString(infoRegistry, "hostname").Set(b.Info.Hostname)
+	monitoring.NewString(infoRegistry, "uuid").Set(b.Info.ID.String())
+	monitoring.NewString(infoRegistry, "ephemeral_id").Set(b.Info.EphemeralID.String())
+	monitoring.NewString(infoRegistry, "binary_arch").Set(runtime.GOARCH)
+	monitoring.NewString(infoRegistry, "build_commit").Set(version.Commit())
+	monitoring.NewTimestamp(infoRegistry, "build_time").Set(version.BuildTime())
+	monitoring.NewBool(infoRegistry, "elastic_licensed").Set(b.Info.ElasticLicensed)
+
+	// Add user metadata data asynchronously (on Windows the lookup can take up to 60s).
+	go func() {
+		if u, err := user.Current(); err != nil {
+			// This usually happens if the user UID does not exist in /etc/passwd. It might be the case on K8S
+			// if the user set securityContext.runAsUser to an arbitrary value.
+			monitoring.NewString(infoRegistry, "uid").Set(strconv.Itoa(os.Getuid()))
+			monitoring.NewString(infoRegistry, "gid").Set(strconv.Itoa(os.Getgid()))
+		} else {
+			monitoring.NewString(infoRegistry, "username").Set(u.Username)
+			monitoring.NewString(infoRegistry, "uid").Set(u.Uid)
+			monitoring.NewString(infoRegistry, "gid").Set(u.Gid)
+		}
+	}()
+
+	stateRegistry := monitoring.GetNamespace("state").GetRegistry()
+
+	// state.service
+	serviceRegistry := stateRegistry.NewRegistry("service")
+	monitoring.NewString(serviceRegistry, "version").Set(b.Info.Version)
+	monitoring.NewString(serviceRegistry, "name").Set(b.Info.Beat)
+	monitoring.NewString(serviceRegistry, "id").Set(b.Info.ID.String())
+
+	// state.beat
+	beatRegistry := stateRegistry.NewRegistry("beat")
+	monitoring.NewString(beatRegistry, "name").Set(b.Info.Name)
+
+	// state.host
+	monitoring.NewFunc(stateRegistry, "host", host.ReportInfo, monitoring.Report)
 }
 
 // TestConfig check all settings are ok and the beat can be run
@@ -475,12 +523,12 @@ func (b *Beat) TestConfig(settings Settings, bt beat.Creator) error {
 			return err
 		}
 
-		fmt.Println("Config OK")
+		fmt.Println("Config OK") //nolint:forbidigo // required to give feedback to user
 		return beat.GracefulExit
 	}())
 }
 
-//SetupSettings holds settings necessary for beat setup
+// SetupSettings holds settings necessary for beat setup
 type SetupSettings struct {
 	Dashboard       bool
 	MachineLearning bool
@@ -490,6 +538,7 @@ type SetupSettings struct {
 	Template bool
 	//Deprecated: use IndexManagementKey instead
 	ILMPolicy bool
+	SetupAll  bool
 }
 
 // Setup registers ES index template, kibana dashboards, ml jobs and pipelines.
@@ -514,7 +563,7 @@ func (b *Beat) Setup(settings Settings, bt beat.Creator, setup SetupSettings) er
 			if outCfg.Name() != "elasticsearch" {
 				return fmt.Errorf("Index management requested but the Elasticsearch output is not configured/enabled")
 			}
-			esClient, err := eslegclient.NewConnectedClient(outCfg.Config())
+			esClient, err := eslegclient.NewConnectedClient(outCfg.Config(), b.Info.Beat)
 			if err != nil {
 				return err
 			}
@@ -528,38 +577,40 @@ func (b *Beat) Setup(settings Settings, bt beat.Creator, setup SetupSettings) er
 			}
 			m := b.IdxSupporter.Manager(idxmgmt.NewESClientHandler(esClient), idxmgmt.BeatsAssets(b.Fields))
 			if ok, warn := m.VerifySetup(loadTemplate, loadILM); !ok {
-				fmt.Println(warn)
+				fmt.Println(warn) //nolint:forbidigo // required to give feedback to user
 			}
 			if err = m.Setup(loadTemplate, loadILM); err != nil {
 				return err
 			}
-			fmt.Println("Index setup finished.")
+			fmt.Println("Index setup finished.") //nolint:forbidigo // required to give feedback to user
 		}
 
 		if setup.Dashboard && settings.HasDashboards {
-			fmt.Println("Loading dashboards (Kibana must be running and reachable)")
+			fmt.Println("Loading dashboards (Kibana must be running and reachable)") //nolint:forbidigo // required to give feedback to user
 			err = b.loadDashboards(context.Background(), true)
 
 			if err != nil {
-				switch err := errw.Cause(err).(type) {
-				case *dashboards.ErrNotFound:
-					fmt.Printf("Skipping loading dashboards, %+v\n", err)
-				default:
+				var notFoundErr *dashboards.ErrNotFound
+				if errors.As(err, &notFoundErr) {
+					fmt.Printf("Skipping loading dashboards, %+v\n", err) //nolint:forbidigo // required to give feedback to user
+				} else {
 					return err
 				}
 			} else {
-				fmt.Println("Loaded dashboards")
+				fmt.Println("Loaded dashboards") //nolint:forbidigo // required to give feedback to user
 			}
 		}
 
 		if setup.MachineLearning && b.SetupMLCallback != nil {
-			cfgwarn.Deprecate("8.0.0", "Setting up ML using %v is going to be removed. Please use the ML app to setup jobs.", strings.Title(b.Info.Beat))
-			fmt.Println("Setting up ML using setup --machine-learning is going to be removed in 8.0.0. Please use the ML app instead.\nSee more: https://www.elastic.co/guide/en/machine-learning/current/index.html")
-			err = b.SetupMLCallback(&b.Beat, b.Config.Kibana)
+			c := cases.Title(language.English)
+			cfgwarn.Deprecate("8.0.0", "Setting up ML using %v is going to be removed. Please use the ML app to setup jobs.", c.String(b.Info.Beat))
+			fmt.Println("Setting up ML using setup --machine-learning is going to be removed in 8.0.0. Please use the ML app instead.\nSee more: https://www.elastic.co/guide/en/machine-learning/current/index.html") //nolint:forbidigo // required to give feedback to user
+			fmt.Println("It is not possble to load ML jobs into an Elasticsearch 8.0.0 or newer using the Beat.")                                                                                                      //nolint:forbidigo // required to give feedback to user
+
+			err = b.SetupMLCallback(&b.Beat, !setup.SetupAll, b.Config.Kibana)
 			if err != nil {
 				return err
 			}
-			fmt.Println("Loaded machine learning job configurations")
 		}
 
 		if setup.Pipeline && b.OverwritePipelinesCallback != nil {
@@ -569,7 +620,7 @@ func (b *Beat) Setup(settings Settings, bt beat.Creator, setup SetupSettings) er
 				return err
 			}
 
-			fmt.Println("Loaded Ingest pipelines")
+			fmt.Println("Loaded Ingest pipelines") //nolint:forbidigo // required to give feedback to user
 		}
 
 		return nil
@@ -589,9 +640,11 @@ func (b *Beat) handleFlags() error {
 func (b *Beat) configure(settings Settings) error {
 	var err error
 
+	b.InputQueueSize = settings.InputQueueSize
+
 	cfg, err := cfgfile.Load("", settings.ConfigOverrides)
 	if err != nil {
-		return fmt.Errorf("error loading config file: %v", err)
+		return fmt.Errorf("error loading config file: %w", err)
 	}
 
 	if err := initPaths(cfg); err != nil {
@@ -602,7 +655,7 @@ func (b *Beat) configure(settings Settings) error {
 	// options.
 	store, err := LoadKeystore(cfg, b.Info.Beat)
 	if err != nil {
-		return fmt.Errorf("could not initialize the keystore: %v", err)
+		return fmt.Errorf("could not initialize the keystore: %w", err)
 	}
 
 	if settings.DisableConfigResolver {
@@ -628,7 +681,7 @@ func (b *Beat) configure(settings Settings) error {
 	b.RawConfig = cfg
 	err = cfg.Unpack(&b.Config)
 	if err != nil {
-		return fmt.Errorf("error unpacking config data: %v", err)
+		return fmt.Errorf("error unpacking config data: %w", err)
 	}
 
 	b.Beat.Config = &b.Config.BeatConfig
@@ -638,7 +691,7 @@ func (b *Beat) configure(settings Settings) error {
 	}
 
 	if err := configure.Logging(b.Info.Beat, b.Config.Logging); err != nil {
-		return fmt.Errorf("error initializing logging: %v", err)
+		return fmt.Errorf("error initializing logging: %w", err)
 	}
 
 	// log paths values to help with troubleshooting
@@ -663,7 +716,12 @@ func (b *Beat) configure(settings Settings) error {
 	}
 
 	if maxProcs := b.Config.MaxProcs; maxProcs > 0 {
+		logp.Info("Set max procs limit: %v", maxProcs)
 		runtime.GOMAXPROCS(maxProcs)
+	}
+	if gcPercent := b.Config.GCPercent; gcPercent > 0 {
+		logp.Info("Set gc percentage to: %v", gcPercent)
+		debug.SetGCPercent(gcPercent)
 	}
 
 	b.Beat.BeatConfig, err = b.BeatConfig()
@@ -691,53 +749,61 @@ func (b *Beat) configure(settings Settings) error {
 
 func (b *Beat) loadMeta(metaPath string) error {
 	type meta struct {
-		UUID uuid.UUID `json:"uuid"`
+		UUID       uuid.UUID `json:"uuid"`
+		FirstStart time.Time `json:"first_start"`
 	}
 
 	logp.Debug("beat", "Beat metadata path: %v", metaPath)
 
 	f, err := openRegular(metaPath)
-	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("Beat meta file failed to open: %s", err)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("Beat meta file failed to open: %w", err)
 	}
 
 	if err == nil {
 		m := meta{}
-		if err := json.NewDecoder(f).Decode(&m); err != nil && err != io.EOF {
+		if err := json.NewDecoder(f).Decode(&m); err != nil && !errors.Is(err, io.EOF) {
 			f.Close()
-			return fmt.Errorf("Beat meta file reading error: %v", err)
+			return fmt.Errorf("Beat meta file reading error: %w", err)
 		}
 
 		f.Close()
+
+		if !m.FirstStart.IsZero() {
+			b.Info.FirstStart = m.FirstStart
+		}
 		valid := m.UUID != uuid.Nil
 		if valid {
 			b.Info.ID = m.UUID
+		}
+
+		if valid && !m.FirstStart.IsZero() {
 			return nil
 		}
 	}
 
-	// file does not exist or ID is invalid, let's create a new one
+	// file does not exist or ID is invalid or first start time is not defined, let's create a new one
 
 	// write temporary file first
 	tempFile := metaPath + ".new"
 	f, err = os.OpenFile(tempFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		return fmt.Errorf("Failed to create Beat meta file: %s", err)
+		return fmt.Errorf("Failed to create Beat meta file: %w", err)
 	}
 
-	encodeErr := json.NewEncoder(f).Encode(meta{UUID: b.Info.ID})
+	encodeErr := json.NewEncoder(f).Encode(meta{UUID: b.Info.ID, FirstStart: b.Info.FirstStart})
 	err = f.Sync()
 	if err != nil {
-		return fmt.Errorf("Beat meta file failed to write: %s", err)
+		return fmt.Errorf("Beat meta file failed to write: %w", err)
 	}
 
 	err = f.Close()
 	if err != nil {
-		return fmt.Errorf("Beat meta file failed to write: %s", err)
+		return fmt.Errorf("Beat meta file failed to write: %w", err)
 	}
 
 	if encodeErr != nil {
-		return fmt.Errorf("Beat meta file failed to write: %s", encodeErr)
+		return fmt.Errorf("Beat meta file failed to write: %w", encodeErr)
 	}
 
 	// move temporary file into final location
@@ -776,7 +842,7 @@ func (b *Beat) loadDashboards(ctx context.Context, force bool) error {
 		}
 		err := b.Config.Dashboards.SetBool("enabled", -1, true)
 		if err != nil {
-			return fmt.Errorf("Error setting dashboard.enabled=true: %v", err)
+			return fmt.Errorf("Error setting dashboard.enabled=true: %w", err)
 		}
 	}
 
@@ -786,12 +852,12 @@ func (b *Beat) loadDashboards(ctx context.Context, force bool) error {
 		// initKibanaConfig will attach the username and password into kibana config as a part of the initialization.
 		kibanaConfig, err := initKibanaConfig(b.Config)
 		if err != nil {
-			return fmt.Errorf("error initKibanaConfig: %v", err)
+			return fmt.Errorf("error initKibanaConfig: %w", err)
 		}
 
-		client, err := kibana.NewKibanaClient(kibanaConfig)
+		client, err := kibana.NewKibanaClient(kibanaConfig, b.Info.Beat)
 		if err != nil {
-			return fmt.Errorf("error connecting to Kibana: %v", err)
+			return fmt.Errorf("error connecting to Kibana: %w", err)
 		}
 		// This fetches the version for Kibana. For the alias feature the version of ES would be needed
 		// but it's assumed that KB and ES have the same minor version.
@@ -799,18 +865,18 @@ func (b *Beat) loadDashboards(ctx context.Context, force bool) error {
 
 		indexPattern, err := kibana.NewGenerator(b.Info.IndexPrefix, b.Info.Beat, b.Fields, b.Info.Version, v, b.Config.Migration.Enabled())
 		if err != nil {
-			return fmt.Errorf("error creating index pattern generator: %v", err)
+			return fmt.Errorf("error creating index pattern generator: %w", err)
 		}
 
 		pattern, err := indexPattern.Generate()
 		if err != nil {
-			return fmt.Errorf("error generating index pattern: %v", err)
+			return fmt.Errorf("error generating index pattern: %w", err)
 		}
 
 		err = dashboards.ImportDashboards(ctx, b.Info, paths.Resolve(paths.Home, ""),
 			kibanaConfig, b.Config.Dashboards, nil, pattern)
 		if err != nil {
-			return errw.Wrap(err, "Error importing Kibana dashboards")
+			return fmt.Errorf("Error importing Kibana dashboards: %w", err)
 		}
 		logp.Info("Kibana dashboards successfully loaded.")
 	}
@@ -828,7 +894,7 @@ func (b *Beat) registerESIndexManagement() error {
 
 	_, err := elasticsearch.RegisterConnectCallback(b.indexSetupCallback())
 	if err != nil {
-		return fmt.Errorf("failed to register index management with elasticsearch: %+v", err)
+		return fmt.Errorf("failed to register index management with elasticsearch: %w", err)
 	}
 	return nil
 }
@@ -842,6 +908,11 @@ func (b *Beat) indexSetupCallback() elasticsearch.ConnectCallback {
 
 func (b *Beat) makeOutputReloader(outReloader pipeline.OutputReloader) reload.Reloadable {
 	return reload.ReloadableFunc(func(config *reload.ConfigWithMeta) error {
+		if b.OutputConfigReloader != nil {
+			if err := b.OutputConfigReloader.Reload(config); err != nil {
+				return err
+			}
+		}
 		return outReloader.Reload(config, b.createOutput)
 	})
 }
@@ -869,7 +940,7 @@ func (b *Beat) registerClusterUUIDFetching() error {
 		if err != nil {
 			return err
 		}
-		elasticsearch.RegisterConnectCallback(callback)
+		_, _ = elasticsearch.RegisterConnectCallback(callback)
 	}
 	return nil
 }
@@ -887,7 +958,7 @@ func (b *Beat) clusterUUIDFetchingCallback() (elasticsearch.ConnectCallback, err
 
 		status, body, err := esClient.Request("GET", "/", "", nil, nil)
 		if err != nil {
-			return errw.Wrap(err, "error querying /")
+			return fmt.Errorf("error querying /: %w", err)
 		}
 		if status > 299 {
 			return fmt.Errorf("Error querying /. Status: %d. Response body: %s", status, body)
@@ -948,7 +1019,7 @@ func (b *Beat) setupMonitoring(settings Settings) (report.Reporter, error) {
 // error. If the err is nil or is a GracefulExit error then the method will
 // return nil without logging anything.
 func handleError(err error) error {
-	if err == nil || err == beat.GracefulExit {
+	if err == nil || errors.Is(err, beat.GracefulExit) {
 		return nil
 	}
 
@@ -994,7 +1065,9 @@ func logSystemInfo(info beat.Info) {
 
 	// Host
 	if host, err := sysinfo.Host(); err == nil {
-		log.Infow("Host info", "host", host.Info())
+		hostInfo := host.Info()
+		hostInfo.IPs = sanitizeIPs(hostInfo.IPs)
+		log.Infow("Host info", "host", hostInfo)
 	}
 
 	// Process
@@ -1070,12 +1143,16 @@ func initKibanaConfig(beatConfig beatConfig) (*common.Config, error) {
 	if esConfig.Enabled() {
 		username, _ := esConfig.String("username", -1)
 		password, _ := esConfig.String("password", -1)
+		api_key, _ := esConfig.String("api_key", -1)
 
 		if !kibanaConfig.HasField("username") && username != "" {
-			kibanaConfig.SetString("username", -1, username)
+			_ = kibanaConfig.SetString("username", -1, username)
 		}
 		if !kibanaConfig.HasField("password") && password != "" {
-			kibanaConfig.SetString("password", -1, password)
+			_ = kibanaConfig.SetString("password", -1, password)
+		}
+		if !kibanaConfig.HasField("api_key") && api_key != "" {
+			_ = kibanaConfig.SetString("api_key", -1, api_key)
 		}
 	}
 	return kibanaConfig, nil
@@ -1087,15 +1164,24 @@ func initPaths(cfg *common.Config) error {
 	// the paths field. After we will unpack the complete configuration and keystore reference
 	// will be correctly replaced.
 	partialConfig := struct {
-		Path paths.Path `config:"path"`
+		Path   paths.Path `config:"path"`
+		Hostfs string     `config:"system.hostfs"`
 	}{}
 
-	if err := cfg.Unpack(&partialConfig); err != nil {
-		return fmt.Errorf("error extracting default paths: %+v", err)
+	if paths.IsCLISet() {
+		cfgwarn.Deprecate("8.0.0", "This flag will be removed in the future and replaced by a config value.")
 	}
 
+	if err := cfg.Unpack(&partialConfig); err != nil {
+		return fmt.Errorf("error extracting default paths: %w", err)
+	}
+
+	// Read the value for hostfs as `system.hostfs`
+	// In the config, there is no `path.hostfs`, as we're merely using the path struct to carry the hostfs variable.
+	partialConfig.Path.Hostfs = partialConfig.Hostfs
+
 	if err := paths.InitPaths(&partialConfig.Path); err != nil {
-		return fmt.Errorf("error setting default paths: %+v", err)
+		return fmt.Errorf("error setting default paths: %w", err)
 	}
 	return nil
 }
@@ -1105,4 +1191,26 @@ func setUmaskWithSettings(settings Settings) error {
 		return setUmask(*settings.Umask)
 	}
 	return setUmask(0027) // 0640 for files | 0750 for dirs
+}
+
+// every IP address received from `Info()` has a netmask suffix
+// which makes every IP address invalid from the validation perspective.
+// If this log entry is ingested to a data stream as it is, the event will be dropped.
+// We must make sure every address is valid and does not have suffixes
+func sanitizeIPs(ips []string) []string {
+	validIPs := make([]string, 0, len(ips))
+	for _, ip := range ips {
+		if ip == "" {
+			continue
+		}
+		trimIndex := strings.LastIndexByte(ip, '/')
+		if trimIndex != -1 {
+			ip = ip[:trimIndex]
+		}
+		if net.ParseIP(ip) == nil {
+			continue
+		}
+		validIPs = append(validIPs, ip)
+	}
+	return validIPs
 }

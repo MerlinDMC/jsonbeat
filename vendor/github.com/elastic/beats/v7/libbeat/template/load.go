@@ -19,11 +19,11 @@ package template
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/elastic/beats/v7/libbeat/beat"
 	"github.com/elastic/beats/v7/libbeat/common"
@@ -39,7 +39,7 @@ var (
 	}
 )
 
-//Loader interface for loading templates
+// Loader interface for loading templates.
 type Loader interface {
 	Load(config TemplateConfig, info beat.Info, fields []byte, migration bool) error
 }
@@ -67,6 +67,10 @@ type FileClient interface {
 	Write(component string, name string, body string) error
 }
 
+type StatusError struct {
+	status int
+}
+
 // NewESLoader creates a new template loader for ES
 func NewESLoader(client ESClient) *ESLoader {
 	return &ESLoader{client: client}
@@ -77,11 +81,15 @@ func NewFileLoader(c FileClient) *FileLoader {
 	return &FileLoader{client: c}
 }
 
-// Load checks if the index mapping template should be loaded
+// Load checks if the index mapping template should be loaded.
 // In case the template is not already loaded or overwriting is enabled, the
-// template is built and written to index
+// template is built and written to index.
 func (l *ESLoader) Load(config TemplateConfig, info beat.Info, fields []byte, migration bool) error {
-	//build template from config
+	if l.client == nil {
+		return errors.New("can not load template without active Elasticsearch client")
+	}
+
+	// build template from config
 	tmpl, err := template(config, info, l.client.GetVersion(), migration)
 	if err != nil || tmpl == nil {
 		return err
@@ -93,20 +101,26 @@ func (l *ESLoader) Load(config TemplateConfig, info beat.Info, fields []byte, mi
 		templateName = config.JSON.Name
 	}
 
-	if l.templateExists(templateName, config.Type) && !config.Overwrite {
-		logp.Info("Template %s already exists and will not be overwritten.", templateName)
+	exists, err := l.templateExists(templateName, config.Type)
+	if err != nil {
+		return fmt.Errorf("failure while checking if template exists: %w", err)
+	}
+
+	if exists && !config.Overwrite {
+		logp.Info("Template %q already exists and will not be overwritten.", templateName)
 		return nil
 	}
 
-	//loading template to ES
+	// loading template to ES
 	body, err := buildBody(tmpl, config, fields)
 	if err != nil {
 		return err
 	}
 	if err := l.loadTemplate(templateName, config.Type, body); err != nil {
-		return fmt.Errorf("could not load template. Elasticsearch returned: %v. Template is: %s", err, body.StringToPrint())
+		return fmt.Errorf("failed to load template: %w", err)
 	}
-	logp.Info("template with name '%s' loaded.", templateName)
+
+	logp.Info("Template with name %q loaded.", templateName)
 	return nil
 }
 
@@ -128,21 +142,21 @@ func (l *ESLoader) loadTemplate(templateName string, templateType IndexTemplateT
 	return nil
 }
 
-// templateExists checks if a given template already exist. It returns true if
-// and only if Elasticsearch returns with HTTP status code 200.
-func (l *ESLoader) templateExists(templateName string, templateType IndexTemplateType) bool {
-	if l.client == nil {
-		return false
+// templateExists checks if a template exists
+func (l *ESLoader) templateExists(templateName string, templateType IndexTemplateType) (bool, error) {
+	path, ok := templateLoaderPath[templateType]
+	if !ok {
+		return false, fmt.Errorf("invalid template type: %+v", templateType)
 	}
-
-	if templateType == IndexTemplateComponent {
-		status, _, _ := l.client.Request("GET", "/_component_template/"+templateName, "", nil, nil)
-		return status == http.StatusOK
+	status, _, err := l.client.Request("HEAD", path+templateName, "", nil, nil)
+	switch status {
+	case http.StatusNotFound:
+		return false, nil
+	case http.StatusOK:
+		return true, nil
+	default:
+		return false, err
 	}
-
-	status, body, _ := l.client.Request("GET", "/_cat/templates/"+templateName, "", nil, nil)
-
-	return status == http.StatusOK && strings.Contains(string(body), templateName)
 }
 
 // Load reads the template from the config, creates the template body and prints it to the configured file.
@@ -171,7 +185,7 @@ func template(config TemplateConfig, info beat.Info, esVersion common.Version, m
 		logp.Info("template config not enabled")
 		return nil, nil
 	}
-	tmpl, err := New(info.Version, info.IndexPrefix, esVersion, config, migration)
+	tmpl, err := New(info.Version, info.IndexPrefix, info.ElasticLicensed, esVersion, config, migration)
 	if err != nil {
 		return nil, fmt.Errorf("error creating template instance: %v", err)
 	}
@@ -240,6 +254,10 @@ func buildMinimalTemplate(tmpl *Template) (common.MapStr, error) {
 		return nil, fmt.Errorf("error creating mimimal template: %v", err)
 	}
 	return body, nil
+}
+
+func (e *StatusError) Error() string {
+	return fmt.Sprintf("request failed with http status code %v", e.status)
 }
 
 func esVersionParams(ver common.Version) map[string]string {

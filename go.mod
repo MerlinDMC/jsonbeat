@@ -20,4 +20,4 @@ replace (
 	golang.org/x/tools => golang.org/x/tools v0.0.0-20200602230032-c00d67ef29d0 // release 1.14
 )
 
-require github.com/elastic/beats/v7 v7.10.2
+require github.com/elastic/beats/v7 v7.17.16

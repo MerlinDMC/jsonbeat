@@ -110,10 +110,9 @@ func (imp Importer) ImportFile(fileType string, file string) error {
 func (imp Importer) ImportDir(dirType string, dir string) error {
 	imp.loader.statusMsg("Import directory %s", dir)
 
-	dir = path.Join(dir, dirType)
 	var errors []string
 
-	files, err := filepath.Glob(path.Join(dir, "*.json"))
+	files, err := filepath.Glob(path.Join(dir, dirType, "*.json"))
 	if err != nil {
 		return fmt.Errorf("Failed to read directory %s. Error: %s", dir, err)
 	}
@@ -241,6 +240,8 @@ func (imp Importer) ImportArchive() error {
 			if err != nil {
 				return err
 			}
+		} else {
+			imp.loader.statusMsg("Skipping import of %s directory. Beat name: %s, base dir name: %s.", dir, imp.cfg.Beat, filepath.Base(dir))
 		}
 	}
 	return nil

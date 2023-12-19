@@ -19,11 +19,26 @@ package add_cloud_metadata
 
 import (
 	"path"
+	"strings"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/elastic/beats/v7/libbeat/common"
 	s "github.com/elastic/beats/v7/libbeat/common/schema"
 	c "github.com/elastic/beats/v7/libbeat/common/schema/mapstriface"
 )
+
+type KubeConfig struct {
+	Clusters []Cluster `yaml:"clusters"`
+}
+
+type Cluster struct {
+	Cluster Server `yaml:"cluster"`
+}
+
+type Server struct {
+	Server string `yaml:"server"`
+}
 
 // Google GCE Metadata Service
 var gceMetadataFetcher = provider{
@@ -35,10 +50,15 @@ var gceMetadataFetcher = provider{
 		gceMetadataURI := "/computeMetadata/v1/?recursive=true&alt=json"
 		gceHeaders := map[string]string{"Metadata-Flavor": "Google"}
 		gceSchema := func(m map[string]interface{}) common.MapStr {
-			out := common.MapStr{}
+			cloud := common.MapStr{
+				"service": common.MapStr{
+					"name": "GCE",
+				},
+			}
+			meta := common.MapStr{}
 
 			trimLeadingPath := func(key string) {
-				v, err := out.GetValue(key)
+				v, err := cloud.GetValue(key)
 				if err != nil {
 					return
 				}
@@ -46,7 +66,7 @@ var gceMetadataFetcher = provider{
 				if !ok {
 					return
 				}
-				out.Put(key, path.Base(p))
+				cloud.Put(key, path.Base(p))
 			}
 
 			if instance, ok := m["instance"].(map[string]interface{}); ok {
@@ -59,9 +79,48 @@ var gceMetadataFetcher = provider{
 						"type": c.Str("machineType"),
 					},
 					"availability_zone": c.Str("zone"),
-				}.ApplyTo(out, instance)
+				}.ApplyTo(cloud, instance)
 				trimLeadingPath("machine.type")
 				trimLeadingPath("availability_zone")
+
+				zone, err := cloud.GetValue("availability_zone")
+				if err == nil {
+					// the region is extracted from the zone by removing <zone> characters from the zone name,
+					// that is made up of <region>-<zone>
+					regionSlice := strings.Split(zone.(string), "-")
+					_, _ = cloud.Put("region", strings.Join(regionSlice[:len(regionSlice)-1], "-"))
+				}
+				s.Schema{
+					"orchestrator": s.Object{
+						"cluster": c.Dict(
+							"attributes",
+							s.Schema{
+								"name":       c.Str("cluster-name"),
+								"kubeconfig": c.Str("kubeconfig"),
+							}),
+					},
+				}.ApplyTo(meta, instance)
+
+			}
+
+			if kubeconfig, err := meta.GetValue("orchestrator.cluster.kubeconfig"); err == nil {
+				kubeConfig, ok := kubeconfig.(string)
+				if !ok {
+					meta.Delete("orchestrator.cluster.kubeconfig")
+				}
+				cc := &KubeConfig{}
+				err := yaml.Unmarshal([]byte(kubeConfig), cc)
+				if err != nil {
+					meta.Delete("orchestrator.cluster.kubeconfig")
+				}
+				if len(cc.Clusters) > 0 {
+					if cc.Clusters[0].Cluster.Server != "" {
+						meta.Delete("orchestrator.cluster.kubeconfig")
+						meta.Put("orchestrator.cluster.url", cc.Clusters[0].Cluster.Server)
+					}
+				}
+			} else {
+				meta.Delete("orchestrator")
 			}
 
 			if project, ok := m["project"].(map[string]interface{}); ok {
@@ -69,10 +128,14 @@ var gceMetadataFetcher = provider{
 					"project": s.Object{
 						"id": c.Str("projectId"),
 					},
-				}.ApplyTo(out, project)
+					"account": s.Object{
+						"id": c.Str("projectId"),
+					},
+				}.ApplyTo(cloud, project)
 			}
 
-			return out
+			meta.DeepUpdate(common.MapStr{"cloud": cloud})
+			return meta
 		}
 
 		fetcher, err := newMetadataFetcher(config, provider, gceHeaders, metadataHost, gceSchema, gceMetadataURI)
